@@ -3,6 +3,7 @@
 This package is an add-on to the Burn-P3+ SyncroSim package that provides the
 Cell2Fire fire growth model.
 
+```
 (base) root@c3ae76e4bb4a:/Cell2Fire/cell2fire# python main.py --help
 cell2fire_path /Cell2Fire/cell2fire
 usage: main.py [-h] [--input-instance-folder INFOLDER]
@@ -125,3 +126,4 @@ optional arguments:
   --EFactor EFACTOR     Adjustement ellipse factor
   --BurningLen BURNINGLEN
                         Burning length period (periods a cell is burning)
+```
