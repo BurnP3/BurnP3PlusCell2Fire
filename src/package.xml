@@ -4,7 +4,7 @@
   displayName="Cell2Fire fire growth model add-on package for Burn-P3"
   isAddOn="True"
   extendsPackage="burnP3Plus"
-  version="0.1.0">
+  version="0.1.1">
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl">
 			<datafeeds>
