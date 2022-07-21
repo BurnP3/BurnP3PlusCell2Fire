@@ -230,7 +230,7 @@ spatialData <-
     jd_min = NA,
     lat = NA,
     lon = NA,
-    elev = ifelse(!is.null(elevationRaster), elevationRaster[], NA),
+    elev = if(!is.null(elevationRaster)){ elevationRaster[]} else NA,
     ffmc = NA,
     ws = NA,
     waz = NA,
@@ -248,7 +248,9 @@ spatialData <-
     pdf = lookup(fueltype, FuelType$ID, FuelType$PercentDeadFir),
     gfl = lookup(fueltype, FuelType$ID, FuelType$GrassFuelLoading),
     cur = lookup(fueltype, FuelType$ID, FuelType$GrassCuring),
-    fueltype = lookup(fueltype, FuelType$ID, FuelType$Code)
+    fueltype = lookup(fueltype, FuelType$ID, FuelType$Code),
+    fueltype = replace_na(fueltype, "NF"),
+    elev = replace_na(elev, -9999)
   )
 
 write_csv(spatialData, spatialDataFile, na = "")
