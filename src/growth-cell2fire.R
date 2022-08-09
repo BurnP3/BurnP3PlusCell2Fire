@@ -5,6 +5,7 @@ library(raster)
 library(rgdal)
 
 # Setup ----
+progressBar(type = "message", message = "Preparing inputs...")
 
 ## Connect to SyncroSim ----
 
@@ -287,17 +288,19 @@ generateWeatherFiles(DeterministicBurnCondition)
 
 # Grow fires ----
 progressBar("begin", totalSteps = length(iterations))
+progressBar(type = "message", message = "Growing fires...")
 
 runCell2Fire()
 
 # Save relevant outputs ----
-
 # Get relative paths to all raw outputs
 rawOutputGridPaths <- file.path(gridOutputFolder, "Grids", 1:nrow(ignitionLocation), "ForestGrid00.csv")
 
 ## Fire statistics table ----
 # Generate the table if it is a requested output, or resampling is requested
 if(OutputOptions$FireStatistics | minimumFireSize > 0) {
+  progressBar(type = "message", message = "Generating fire statistics table...")
+  
   # Calculate burn areas for each fire
   burnAreas <- map_dbl(rawOutputGridPaths, getBurnArea) %>%
     `*`(raster::xres(fuelsRaster) * raster::yres(fuelsRaster) / 1e4)
@@ -334,11 +337,11 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     ungroup()
     
   # Report status
-  message("Done Simulation. ", 
-          length(burnAreas), " fires burned. ",
-          sum(burnAreas < minimumFireSize, na.rm = T), " fires discarded due to insufficient burn area. ",
-          round(sum(burnAreas >= minimumFireSize, na.rm = T) / length(burnAreas) * 100, 0), "% of simulated fires were above the minimum fire size. ",
-          round(sum(OutputFireStatistic$ResampleStatus == "Not Used") / length(burnAreas) * 100, 0), "% of simulated fires not used because target ignition count was already met.")
+  updateRunLog("\nBurn Summary:\n", 
+               length(burnAreas), " fires burned. \n",
+               sum(burnAreas < minimumFireSize, na.rm = T), " fires discarded due to insufficient burn area.\n",
+               round(sum(burnAreas >= minimumFireSize, na.rm = T) / length(burnAreas) * 100, 0), "% of simulated fires were above the minimum fire size.\n",
+               round(sum(OutputFireStatistic$ResampleStatus == "Not Used") / length(burnAreas) * 100, 0), "% of simulated fires not used because target ignition count was already met.")
   
   # Determine if target ignition counts were met for all iterations
   targetIgnitionsMet <- OutputFireStatistic %>%
@@ -347,10 +350,10 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     pull(targetIgnitionsMet)
   
   if(!all(targetIgnitionsMet))
-    warning("Could not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
-            " iterations. Please increase the Maximum Number of Fires to Resample per Iteration in the Run Controls",
-            " or decrease the Minimum Fire Size. Please see the Fire Statistics table for details on specific iterations,",
-            " fires, and burn conditions.")
+    updateRunLog("\nWarning: Could not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
+                 " iterations. Please increase the Maximum Number of Fires to Resample per Iteration in the Run Controls",
+                 " or decrease the Minimum Fire Size. Please see the Fire Statistics table for details on specific iterations,",
+                 " fires, and burn conditions.")
   
  # Append extra info and save if requested 
   if(OutputOptions$FireStatistics | !all(targetIgnitionsMet)) {
@@ -407,6 +410,8 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
 
 ## Burn maps ----
 if(saveBurnMaps) {
+  progressBar(type = "message", message = "Saving burn maps...")
+  
   # Identify which unique fire ID's belong to each iteration
   # - This depends on the resample status if fires are resampled, otherwise it is all fire IDs
   if(minimumFireSize >= 0) {
