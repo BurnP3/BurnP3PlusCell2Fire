@@ -4,9 +4,9 @@
   displayName="Cell2Fire fire growth model add-on package for Burn-P3"
   isAddOn="True"
   extendsPackage="burnP3Plus"
-  version="0.1.1">
+  version="0.2.0">
   <transformers>
-		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl">
+		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
 				<datafeed name="FuelCode" displayName="Cell2Fire Fuel Code List" dataScope="Project">
 					<datasheets>
