@@ -31,6 +31,24 @@ elevationRaster <- tryCatch(
   datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "ElevationGridFileName"),
   error = function(e) NULL)
 
+## Handle empty values ----
+if(nrow(OutputOptions) == 0) {
+  updateRunLog("No tabular output options chosen. Defaulting to keeping all tabular outputs.")
+  OutputOptions[1,] <- rep(TRUE, length(OutputOptions[1,]))
+  saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
+}
+
+if(nrow(OutputOptionsSpatial) == 0) {
+  updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.")
+  OutputOptionsSpatial[1,] <- rep(TRUE, length(OutputOptionsSpatial[1,]))
+  saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
+}
+
+if(nrow(ResampleOption) == 0) {
+  ResampleOption[1,] <- c(0,0)
+  saveDatasheet(myScenario, ResampleOption, "burnP3Plus_FireResampleOption")
+}
+
 ## Extract relevant parameters ----
 
 # Burn maps must be kept to generate summarized maps later, this boolean summarizes
