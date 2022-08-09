@@ -399,7 +399,8 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
   
   # Combine burn grids
   for(i in UniqueFireIDs)
-    accumulator <- accumulator + as.matrix(read_csv(burnGrids[i], col_names = F, col_types = cols(.default = col_integer())))
+    if(!is.na(i))
+      accumulator <- accumulator + as.matrix(read_csv(burnGrids[i], col_names = F, col_types = cols(.default = col_integer())))
   accumulator[accumulator != 0] <- 1
   
   # Mask and save as raster
@@ -417,7 +418,8 @@ if(saveBurnMaps) {
   if(minimumFireSize >= 0) {
     ignitionsToExport <- ignitionLocation %>%
       left_join(OutputFireStatistic, by = c("Iteration", "FireID")) %>%
-      filter(ResampleStatus == "Kept")
+      filter(ResampleStatus == "Kept") %>%
+      bind_rows(tibble(Iteration = iterations))
   } else
     ignitionsToExport <- ignitionLocation
   
