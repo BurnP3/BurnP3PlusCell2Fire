@@ -33,14 +33,20 @@ elevationRaster <- tryCatch(
   error = function(e) NULL)
 
 ## Handle empty values ----
+if(nrow(FuelTypeCrosswalk) == 0) {
+  updateRunLog("No fuels code crosswalk found! Using default crosswalk for Canadian Forest Service fuel codes.", type = "warning")
+  FuelTypeCrosswalk <- read_csv(file.path(ssimEnvironment()$PackageDirectory, "Default Fuel Crosswalk.csv"))
+  saveDatasheet(myScenario, FuelTypeCrosswalk, "burnP3PlusCell2Fire_FuelCodeCrosswalk")
+}
+
 if(nrow(OutputOptions) == 0) {
-  updateRunLog("No tabular output options chosen. Defaulting to keeping all tabular outputs.")
+  updateRunLog("No tabular output options chosen. Defaulting to keeping all tabular outputs.", type = "info")
   OutputOptions[1,] <- rep(TRUE, length(OutputOptions[1,]))
   saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
 }
 
 if(nrow(OutputOptionsSpatial) == 0) {
-  updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.")
+  updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.", type = "info")
   OutputOptionsSpatial[1,] <- rep(TRUE, length(OutputOptionsSpatial[1,]))
   saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
 }
@@ -350,10 +356,10 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     pull(targetIgnitionsMet)
   
   if(!all(targetIgnitionsMet))
-    updateRunLog("\nWarning: Could not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
+    updateRunLog("\nCould not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
                  " iterations. Please increase the Maximum Number of Fires to Resample per Iteration in the Run Controls",
                  " or decrease the Minimum Fire Size. Please see the Fire Statistics table for details on specific iterations,",
-                 " fires, and burn conditions.")
+                 " fires, and burn conditions.", type = "warning")
   
  # Append extra info and save if requested 
   if(OutputOptions$FireStatistics | !all(targetIgnitionsMet)) {
