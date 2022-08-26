@@ -91,7 +91,7 @@ if(any(!FuelType$Code %in% ValidFuelCodes))
 
 # Ensure that there are no fuels present in the grid that are not tied to a valid code
 fuelIdsPresent <- fuelsRaster %>% unique()
-if(any(!fuelIdsPresent %in% FuelType$ID))
+if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
   stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ", 
        setdiff(fuelIdsPresent, FuelType$ID) %>% str_c(collapse = " "))
 
