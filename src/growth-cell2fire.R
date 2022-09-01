@@ -137,9 +137,8 @@ lookup <- function(x, old, new) dplyr::recode(x, !!!set_names(new, old))
 
 # Get burn area from output csv
 getBurnArea <- function(inputFile) {
-  inputFile %>%
-    read_csv(col_names = F, col_types = cols(.default = col_integer())) %>%
-    as.matrix %>%
+  read.csv(inputFile, header = F) %>%
+    as.matrix() %>%
     sum %>%
     return
 }
@@ -308,8 +307,13 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   progressBar(type = "message", message = "Generating fire statistics table...")
   
   # Calculate burn areas for each fire
-  burnAreas <- map_dbl(rawOutputGridPaths, getBurnArea) %>%
-    `*`(raster::xres(fuelsRaster) * raster::yres(fuelsRaster) / 1e4)
+  burnAreas <- c(NA_real_)
+  length(burnAreas) <- length(rawOutputGridPaths)
+  
+  for (i in seq_along(burnAreas))
+    burnAreas[i] <- getBurnArea(rawOutputGridPaths[i])
+  
+  burnAreas <- burnAreas * (raster::xres(fuelsRaster) * raster::yres(fuelsRaster) / 1e4)
   
   # Build fire statistics table
   OutputFireStatistic <-
@@ -406,7 +410,7 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
   # Combine burn grids
   for(i in UniqueFireIDs)
     if(!is.na(i))
-      accumulator <- accumulator + as.matrix(read_csv(burnGrids[i], col_names = F, col_types = cols(.default = col_integer())))
+      accumulator <- accumulator + as.matrix(read.csv(burnGrids[i], header = F))
   accumulator[accumulator != 0] <- 1
   
   # Mask and save as raster
@@ -429,11 +433,13 @@ if(saveBurnMaps) {
   } else
     ignitionsToExport <- ignitionLocation
   
-  ignitionsToExport %>%
+  ignitionsToExportTable <- ignitionsToExport %>%
     dplyr::select(Iteration, UniqueFireID) %>%
     group_by(Iteration) %>%
-    summarize(UniqueFireIDs = list(UniqueFireID)) %>%
-    pwalk(generateBurnAccumulators, burnGrids = rawOutputGridPaths)
+    summarize(UniqueFireIDs = list(UniqueFireID))
+  
+  for (i in seq_len(nrow(ignitionsToExportTable)))
+    generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths)
   
   # Build table of burn maps and save to SyncroSim
   OutputBurnMap <- 
