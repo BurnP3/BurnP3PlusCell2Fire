@@ -148,9 +148,9 @@ updateBreakpoint <- function() {
   if (elapsed < 60) {
     return(str_c(round(elapsed), "sec"))
   } else if (elapsed < 60^2) {
-    return(str_c(round(elapsed / 60), "min"))
+    return(str_c(round(elapsed / 60, 1), "min"))
   } else
-    return(str_c(round(elapsed / 60 / 60), "hr"))
+    return(str_c(round(elapsed / 60 / 60, 1), "hr"))
 }
 
 # Define a function to facilitate recoding values using a lookup table
@@ -378,7 +378,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
                length(burnAreas), " fires burned. \n",
                sum(burnAreas < minimumFireSize, na.rm = T), " fires discarded due to insufficient burn area.\n",
                round(sum(burnAreas >= minimumFireSize, na.rm = T) / length(burnAreas) * 100, 0), "% of simulated fires were above the minimum fire size.\n",
-               round(sum(OutputFireStatistic$ResampleStatus == "Not Used") / length(burnAreas) * 100, 0), "% of simulated fires not used because target ignition count was already met.")
+               round(sum(OutputFireStatistic$ResampleStatus == "Not Used") / length(burnAreas) * 100, 0), "% of simulated fires not used because target ignition count was already met.\n")
   
   # Determine if target ignition counts were met for all iterations
   targetIgnitionsMet <- OutputFireStatistic %>%
@@ -387,10 +387,10 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     pull(targetIgnitionsMet)
   
   if(!all(targetIgnitionsMet))
-    updateRunLog("\nCould not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
+    updateRunLog("Could not sample enough fires above the specified minimum fire size for ", sum(!targetIgnitionsMet),
                  " iterations. Please increase the Maximum Number of Fires to Resample per Iteration in the Run Controls",
                  " or decrease the Minimum Fire Size. Please see the Fire Statistics table for details on specific iterations,",
-                 " fires, and burn conditions.", type = "warning")
+                 " fires, and burn conditions.\n", type = "warning")
   
  # Append extra info and save if requested 
   if(OutputOptions$FireStatistics | !all(targetIgnitionsMet)) {
