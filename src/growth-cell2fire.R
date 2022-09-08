@@ -7,6 +7,9 @@ library(rgdal)
 # Setup ----
 progressBar(type = "message", message = "Preparing inputs...")
 
+# Initialize first breakpoint for timing code
+currentBreakPoint <- proc.time()
+
 ## Connect to SyncroSim ----
 
 myScenario <- scenario()
@@ -132,6 +135,24 @@ NAvalue(burnAccumulator) <- -9999
 
 ### Convenience and conversion functions ----
 
+# Function to time code by returning a clean string of time since this function was last called
+updateBreakpoint <- function() {
+  # Calculate time since last breakpoint
+  newBreakPoint <- proc.time()
+  elapsed <- (newBreakPoint - currentBreakPoint)['elapsed']
+  
+  # Update current breakpoint
+  currentBreakPoint <<- newBreakPoint
+  
+  # Return cleaned elapsed time
+  if (elapsed < 60) {
+    return(str_c(round(elapsed), "sec"))
+  } else if (elapsed < 60^2) {
+    return(str_c(round(elapsed / 60), "min"))
+  } else
+    return(str_c(round(elapsed / 60 / 60), "hr"))
+}
+
 # Define a function to facilitate recoding values using a lookup table
 lookup <- function(x, old, new) dplyr::recode(x, !!!set_names(new, old))
 
@@ -228,6 +249,8 @@ generateIgnitionFile <- function(CellIDs){
     write_csv(ignitionFile)
 }
 
+updateRunLog("Finished parsing run inputs in ", updateBreakpoint())
+
 # Prepare Shared Inputs ----
 
 # Raster metadata
@@ -291,11 +314,15 @@ generateIgnitionFile(ignitionLocation$CellID)
 # Split and save weather files
 generateWeatherFiles(DeterministicBurnCondition) 
 
+updateRunLog("Finished generating model inputs in ", updateBreakpoint())
+
 # Grow fires ----
 progressBar("begin", totalSteps = length(iterations))
 progressBar(type = "message", message = "Growing fires...")
 
 runCell2Fire()
+
+updateRunLog("Finished burning fires in ", updateBreakpoint())
 
 # Save relevant outputs ----
 # Get relative paths to all raw outputs
@@ -400,6 +427,8 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     if(nrow(OutputFireStatistic) > 0)
       saveDatasheet(myScenario, OutputFireStatistic, "burnP3Plus_OutputFireStatistic", append = T)
   }
+  
+  updateRunLog("Finished collecting fire statistics in ", updateBreakpoint())
 }
 
 # Function to summarize individual burn grids by iteration
@@ -453,11 +482,13 @@ if(saveBurnMaps) {
   # Output if there are records to save
   if(nrow(OutputBurnMap) > 0)
     saveDatasheet(myScenario, OutputBurnMap, "burnP3Plus_OutputBurnMap", append = T)
+  
+  updateRunLog("Finished accumulating burn maps in ", updateBreakpoint())
 }
 
 ## Burn perimeters ----
 if(OutputOptionsSpatial$BurnPerimeter) {
-  warning("Cell2Fire does not provide burn perimeters.")
+  updateRunLog("Cell2Fire does not provide burn perimeters.", type = "info")
 }
 
 # Remove grid outputs if present
