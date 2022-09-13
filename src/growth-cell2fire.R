@@ -1,8 +1,10 @@
 library(rsyncrosim)
 library(tidyverse)
 library(lubridate)
-library(raster)
+library(terra)
 library(rgdal)
+library(data.table)
+library(future.apply)
 
 # Setup ----
 progressBar(type = "message", message = "Preparing inputs...")
@@ -30,15 +32,15 @@ OutputOptions <- datasheet(myScenario, "burnP3Plus_OutputOption")
 OutputOptionsSpatial <- datasheet(myScenario, "burnP3Plus_OutputOptionSpatial")
 
 # Import relevant rasters, allowing for missing elevation
-fuelsRaster <- datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "FuelGridFileName")
-elevationRaster <- tryCatch(
+fuelsRaster <- rast(datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "FuelGridFileName"))
+elevationRaster <- rast(tryCatch(
   datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "ElevationGridFileName"),
-  error = function(e) NULL)
+  error = function(e) NULL))
 
 ## Handle empty values ----
 if(nrow(FuelTypeCrosswalk) == 0) {
   updateRunLog("No fuels code crosswalk found! Using default crosswalk for Canadian Forest Service fuel codes.", type = "warning")
-  FuelTypeCrosswalk <- read_csv(file.path(ssimEnvironment()$PackageDirectory, "Default Fuel Crosswalk.csv"))
+  FuelTypeCrosswalk <- fread(file.path(ssimEnvironment()$PackageDirectory, "Default Fuel Crosswalk.csv"))
   saveDatasheet(myScenario, FuelTypeCrosswalk, "burnP3PlusCell2Fire_FuelCodeCrosswalk")
 }
 
@@ -126,10 +128,6 @@ unlink(accumulatorOutputFolder, recursive = T, force = T)
 dir.create(gridOutputFolder, showWarnings = F)
 dir.create(accumulatorOutputFolder, showWarnings = F)
 
-# Create placeholder rasters for potential outputs
-burnAccumulator <- raster(fuelsRaster)
-dataType(burnAccumulator) <- "INT4S"
-NAvalue(burnAccumulator) <- -9999
 
 ## Function Definitions ----
 
@@ -158,7 +156,7 @@ lookup <- function(x, old, new) dplyr::recode(x, !!!set_names(new, old))
 
 # Get burn area from output csv
 getBurnArea <- function(inputFile) {
-  read.csv(inputFile, header = F) %>%
+  fread(inputFile, header = F) %>%
     as.matrix() %>%
     sum %>%
     return
@@ -210,7 +208,7 @@ generateWeatherFile <- function(weatherData, uniqueFireIndex) {
       ISI = InitialSpreadIndex,
       BUI = BuildupIndex,
       FWI = FireWeatherIndex) %>%
-    write_csv(file.path(weatherFolder, str_c("Weather", uniqueFireIndex, ".csv")), escape = "none")
+    fwrite(file.path(weatherFolder, str_c("Weather", uniqueFireIndex, ".csv")))
   invisible()
 }
 
@@ -225,7 +223,7 @@ generateWeatherFiles <- function(DeterministicBurnCondition){
     transmute(weatherData = data, uniqueFireIndex = row_number()) %>%
     pmap(generateWeatherFile)
   
-  tibble(
+  data.table(
       Scenario = NA,
       datetime = NA,
       APCP = NA,
@@ -239,14 +237,14 @@ generateWeatherFiles <- function(DeterministicBurnCondition){
       ISI = NA,
       BUI = NA,
       FWI = NA) %>%
-  write_csv(file.path(tempDir, "Weather.csv"), na = "")
+  fwrite(file.path(tempDir, "Weather.csv"), na = "")
   invisible()
 }
 
 # Function to create an ignition location file
 generateIgnitionFile <- function(CellIDs){
-  tibble(Year = seq_along(CellIDs), Ncell = CellIDs) %>%
-    write_csv(ignitionFile)
+  data.table(Year = seq_along(CellIDs), Ncell = CellIDs) %>%
+    fwrite(ignitionFile)
 }
 
 updateRunLog("Finished parsing run inputs in ", updateBreakpoint())
@@ -261,7 +259,7 @@ mapMetadata <- str_c("ncols ",        ncol(fuelsRaster),    "\n",
                      "xllcorner ",    xmin(fuelsRaster),    "\n",
                      "yllcorner ",    ymin(fuelsRaster),    "\n",
                      "cellsize ",     res(fuelsRaster)[1],  "\n",
-                     "NODATA_value ", NAvalue(fuelsRaster), "\n")
+                     "NODATA_value ", NAflag(fuelsRaster), "\n")
 
 write_file(mapMetadata, mapMetadataFile)
 
@@ -299,8 +297,7 @@ spatialData <-
     fueltype = replace_na(fueltype, "NF"),
     elev = replace_na(elev, -9999)
   )
-
-write_csv(spatialData, spatialDataFile, na = "")
+fwrite(spatialData, spatialDataFile, na = "")
 
 # Convert ignition location to cell ID
 ignitionLocation <- DeterministicIgnitionLocation %>%
@@ -337,10 +334,10 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   burnAreas <- c(NA_real_)
   length(burnAreas) <- length(rawOutputGridPaths)
   
-  for (i in seq_along(burnAreas))
-    burnAreas[i] <- getBurnArea(rawOutputGridPaths[i])
+  plan(tweak(multisession, workers = availableCores()/4))
+  burnAreas <- unlist(future_lapply(rawOutputGridPaths[seq_along(burnAreas)],getBurnArea))
   
-  burnAreas <- burnAreas * (raster::xres(fuelsRaster) * raster::yres(fuelsRaster) / 1e4)
+  burnAreas <- burnAreas * (xres(fuelsRaster) * yres(fuelsRaster) / 1e4)
   
   # Build fire statistics table
   OutputFireStatistic <-
@@ -396,12 +393,12 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   if(OutputOptions$FireStatistics | !all(targetIgnitionsMet)) {
     
     # Load necessary rasters and lookup tables
-    fireZoneRaster <- tryCatch(
+    fireZoneRaster <- rast(tryCatch(
       datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "FireZoneGridFileName"),
-      error = function(e) NULL)
-    weatherZoneRaster <- tryCatch(
+      error = function(e) NULL))
+    weatherZoneRaster <- rast(tryCatch(
       datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "WeatherZoneGridFileName"),
-      error = function(e) NULL)
+      error = function(e) NULL))
     FireZoneTable <- datasheet(myScenario, "burnP3Plus_FireZone")
     WeatherZoneTable <- datasheet(myScenario, "burnP3Plus_WeatherZone")
     
@@ -411,9 +408,9 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
       left_join(DeterministicIgnitionLocation, by = c("Iteration", "FireID")) %>%
       mutate(
         cell = cellFromRowCol(fuelsRaster, Y, X),
-        FireZone = ifelse(!is.null(fireZoneRaster), fireZoneRaster[cell] %>% lookup(FireZoneTable$ID, FireZoneTable$Name), ""),
-        WeatherZone = ifelse(!is.null(weatherZoneRaster), weatherZoneRaster[cell] %>% lookup(WeatherZoneTable$ID, WeatherZoneTable$Name), ""),
-        FuelType = fuelsRaster[cell] %>% lookup(FuelType$ID, FuelType$Name)) %>%
+        FireZone = ifelse(!is.null(fireZoneRaster), fireZoneRaster[][cell] %>% lookup(FireZoneTable$ID, FireZoneTable$Name), ""),
+        WeatherZone = ifelse(!is.null(weatherZoneRaster), weatherZoneRaster[][cell] %>% lookup(WeatherZoneTable$ID, WeatherZoneTable$Name), ""),
+        FuelType = fuelsRaster[][cell] %>% lookup(FuelType$ID, FuelType$Name)) %>%
       
       # Incorporate Lat and Long and add TimeStep manually
       # - SyncoSim currently expects integers for X, Y, let's leave X, Y as Row, Col for now
@@ -439,13 +436,18 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
   # Combine burn grids
   for(i in UniqueFireIDs)
     if(!is.na(i))
-      accumulator <- accumulator + as.matrix(read.csv(burnGrids[i], header = F))
+      accumulator <- accumulator + as.matrix(fread(burnGrids[i],header = F))
   accumulator[accumulator != 0] <- 1
   
   # Mask and save as raster
-  setValues(burnAccumulator, accumulator) %>%
+  rast(fuelsRaster, vals = accumulator) %>%
     mask(fuelsRaster) %>%
-    writeRaster(str_c(accumulatorOutputFolder, "/it", Iteration, ".tif"), overwrite = T, NAflag = -9999)
+    writeRaster(str_c(accumulatorOutputFolder, "/it", Iteration, ".tif"), 
+                overwrite = T,
+                NAflag = -9999,
+                wopt = list(filetype = "GTiff",
+                     datatype = "INT4S",
+                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
 }
 
 ## Burn maps ----
