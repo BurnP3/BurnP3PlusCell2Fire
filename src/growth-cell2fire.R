@@ -98,7 +98,7 @@ if(any(!FuelType$Code %in% ValidFuelCodes))
 fuelIdsPresent <- fuelsRaster %>% unique()
 if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
   stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ", 
-       setdiff(fuelIdsPresent, FuelType$ID) %>% str_c(collapse = " "))
+       dplyr::setdiff(fuelIdsPresent, data.frame(Fuels = FuelType[,"ID"])) %>% str_c(collapse = " "))
 
 ## Setup files and folders ----
 
@@ -162,7 +162,7 @@ getBurnArea <- function(inputFile) {
     return
 }
 
-# Function to call Pandora on the (global) parameter file
+# Function to call Cell2Fire on the (global) parameter file
 runCell2Fire <- function() {
   # Format folder paths
   inputInstanceFolder <- tempDir %>%
