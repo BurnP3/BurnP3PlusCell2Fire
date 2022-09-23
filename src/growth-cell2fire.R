@@ -392,12 +392,12 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   if(OutputOptions$FireStatistics | !all(targetIgnitionsMet)) {
     
     # Load necessary rasters and lookup tables
-    fireZoneRaster <- rast(tryCatch(
-      datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "FireZoneGridFileName"),
-      error = function(e) NULL))
-    weatherZoneRaster <- rast(tryCatch(
-      datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "WeatherZoneGridFileName"),
-      error = function(e) NULL))
+    fireZoneRaster <- tryCatch(
+      rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["FireZoneGridFileName"]]),
+      error = function(e) NULL)
+    weatherZoneRaster <- tryCatch(
+      rast(datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters")[["WeatherZoneGridFileName"]]),
+      error = function(e) NULL)
     FireZoneTable <- datasheet(myScenario, "burnP3Plus_FireZone")
     WeatherZoneTable <- datasheet(myScenario, "burnP3Plus_WeatherZone")
     
