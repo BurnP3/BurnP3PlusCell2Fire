@@ -2,7 +2,6 @@ library(rsyncrosim)
 library(tidyverse)
 library(lubridate)
 library(terra)
-library(rgdal)
 library(data.table)
 library(future.apply)
 
@@ -32,10 +31,10 @@ OutputOptions <- datasheet(myScenario, "burnP3Plus_OutputOption")
 OutputOptionsSpatial <- datasheet(myScenario, "burnP3Plus_OutputOptionSpatial")
 
 # Import relevant rasters, allowing for missing elevation
-fuelsRaster <- rast(datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "FuelGridFileName"))
-elevationRaster <- rast(tryCatch(
-  datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters", "ElevationGridFileName"),
-  error = function(e) NULL))
+fuelsRaster <- rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["FuelGridFileName"]])
+elevationRaster <- tryCatch(
+  rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["ElevationGridFileName"]]),
+  error = function(e) NULL)
 
 ## Handle empty values ----
 if(nrow(FuelTypeCrosswalk) == 0) {
