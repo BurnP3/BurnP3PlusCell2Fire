@@ -94,7 +94,7 @@ if(any(!FuelType$Code %in% ValidFuelCodes))
   stop("Invalid fuel codes found in the Fuel Type definitions. Please consider setting an exlicit Fuel Code Crosswalk for Cell2Fire in the project scope.")
 
 # Ensure that there are no fuels present in the grid that are not tied to a valid code
-fuelIdsPresent <- fuelsRaster %>% unique()
+fuelIdsPresent <- fuelsRaster %>% unique() %>% pull
 if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
   stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ", 
        dplyr::setdiff(fuelIdsPresent, data.frame(Fuels = FuelType[,"ID"])) %>% str_c(collapse = " "))
@@ -267,14 +267,14 @@ write_file(mapMetadata, mapMetadataFile)
 #   a fixed set and order of columns
 spatialData <- 
   tibble(
-    fueltype = fuelsRaster[],
+    fueltype = values(fuelsRaster, mat = F),
     mon = NA,
     jd = NA,
     M = NA,
     jd_min = NA,
     lat = NA,
     lon = NA,
-    elev = if(!is.null(elevationRaster)){ elevationRaster[]} else NA,
+    elev = if(!is.null(elevationRaster)){ values(elevationRaster, mat = F)} else NA,
     ffmc = NA,
     ws = NA,
     waz = NA,
