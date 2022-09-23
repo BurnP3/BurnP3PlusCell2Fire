@@ -3,7 +3,6 @@ library(tidyverse)
 library(lubridate)
 library(terra)
 library(data.table)
-library(future.apply)
 
 # Setup ----
 progressBar(type = "message", message = "Preparing inputs...")
@@ -333,8 +332,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   burnAreas <- c(NA_real_)
   length(burnAreas) <- length(rawOutputGridPaths)
   
-  plan(tweak(multisession, workers = availableCores()/4))
-  burnAreas <- unlist(future_lapply(rawOutputGridPaths[seq_along(burnAreas)],getBurnArea))
+  burnAreas <- unlist(lapply(rawOutputGridPaths[seq_along(burnAreas)],getBurnArea))
   
   burnAreas <- burnAreas * (xres(fuelsRaster) * yres(fuelsRaster) / 1e4)
   
