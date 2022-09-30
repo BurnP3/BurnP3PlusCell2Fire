@@ -152,6 +152,17 @@ updateBreakpoint <- function() {
 # Define a function to facilitate recoding values using a lookup table
 lookup <- function(x, old, new) dplyr::recode(x, !!!set_names(new, old))
 
+# Function to convert from latlong to cell index
+cellFromLatLong <- function(x, lat, long) {
+  # Convert list of lat and long to SpatVector, reproject to source crs
+  points <- matrix(c(long, lat), ncol = 2) %>%
+    vect(crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+    project(x)
+  
+  # Get vector of cell ID's from points
+  return(cells(x, points)[, "cell"])
+}
+
 # Get burn area from output csv
 getBurnArea <- function(inputFile) {
   fread(inputFile, header = F) %>%
@@ -299,7 +310,7 @@ fwrite(spatialData, spatialDataFile, na = "")
 
 # Convert ignition location to cell ID
 ignitionLocation <- DeterministicIgnitionLocation %>%
-  mutate(CellID = cellFromRowCol(fuelsRaster, Y, X)) %>%
+  mutate(CellID = cellFromLatLong(fuelsRaster, Latitude, Longitude)) %>%
   dplyr::select(Iteration, FireID, CellID) %>%
   arrange(Iteration, FireID) %>%
   mutate(UniqueFireID = row_number())
@@ -394,7 +405,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
       rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["FireZoneGridFileName"]]),
       error = function(e) NULL)
     weatherZoneRaster <- tryCatch(
-      rast(datasheetRaster(myScenario, "burnP3Plus_LandscapeRasters")[["WeatherZoneGridFileName"]]),
+      rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["WeatherZoneGridFileName"]]),
       error = function(e) NULL)
     FireZoneTable <- datasheet(myScenario, "burnP3Plus_FireZone")
     WeatherZoneTable <- datasheet(myScenario, "burnP3Plus_WeatherZone")
@@ -404,17 +415,16 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
       # Determine Fire and Weather Zones if the rasters are present, as well as fuel type of ignition location
       left_join(DeterministicIgnitionLocation, by = c("Iteration", "FireID")) %>%
       mutate(
-        cell = cellFromRowCol(fuelsRaster, Y, X),
+        cell = cellFromLatLong(fuelsRaster, Latitude, Longitude),
         FireZone = ifelse(!is.null(fireZoneRaster), fireZoneRaster[][cell] %>% lookup(FireZoneTable$ID, FireZoneTable$Name), ""),
         WeatherZone = ifelse(!is.null(weatherZoneRaster), weatherZoneRaster[][cell] %>% lookup(WeatherZoneTable$ID, WeatherZoneTable$Name), ""),
         FuelType = fuelsRaster[][cell] %>% lookup(FuelType$ID, FuelType$Name)) %>%
       
       # Incorporate Lat and Long and add TimeStep manually
-      # - SyncoSim currently expects integers for X, Y, let's leave X, Y as Row, Col for now
       mutate(Timestep = 0) %>%
     
       # Clean up for saving
-      dplyr::select(Iteration, Timestep, FireID, X, Y, Season, Cause, FireZone, WeatherZone, FuelType, FireDuration, HoursBurning, Area, ResampleStatus) %>%
+      dplyr::select(Iteration, Timestep, FireID, Latitude, Longitude, Season, Cause, FireZone, WeatherZone, FuelType, FireDuration, HoursBurning, Area, ResampleStatus) %>%
       as.data.frame()
       
     # Output if there are records to save
