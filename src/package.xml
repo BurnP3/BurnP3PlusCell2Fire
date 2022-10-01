@@ -66,6 +66,9 @@
 				<datafeed name="burnP3Plus_DeterministicIgnitionCount" type="Input"/>
 				<datafeed name="burnP3Plus_DeterministicIgnitionLocation" type="Input"/>
 				<datafeed name="burnP3Plus_DeterministicBurnCondition" type="Input"/>
+				<datafeed name="burnP3Plus_GreenUp" type="Input"/>
+				<datafeed name="burnP3Plus_Curing" type="Input"/>
+				<datafeed name="burnP3Plus_FuelLoad" type="Input"/>
 				<datafeed name="burnP3Plus_OutputFireStatistic" type="Output"/>
 				<datafeed name="burnP3Plus_OutputBurnMap" type="Output"/>
 				<datafeed name="burnP3Plus_OutputFirePerimeter" type="Output"/>
