@@ -26,6 +26,7 @@ DeterministicBurnCondition <- datasheet(myScenario, "burnP3Plus_DeterministicBur
 FuelType <- datasheet(myScenario, "burnP3Plus_FuelType", lookupsAsFactors = F)
 FuelTypeCrosswalk <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCodeCrosswalk", lookupsAsFactors = F)
 ValidFuelCodes <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCode") %>% pull()
+WindGrid <- datasheet(myScenario, "burnP3Plus_WindGrid", lookupsAsFactors = F, optional = T)
 GreenUp <- datasheet(myScenario, "burnP3Plus_GreenUp", lookupsAsFactors = F, optional = T)
 Curing <- datasheet(myScenario, "burnP3Plus_Curing", lookupsAsFactors = F, optional = T)
 FuelLoad <- datasheet(myScenario, "burnP3Plus_FuelLoad", lookupsAsFactors = F, optional = T)
@@ -60,6 +61,11 @@ if(nrow(OutputOptionsSpatial) == 0) {
 if(nrow(ResampleOption) == 0) {
   ResampleOption[1,] <- c(0,0)
   saveDatasheet(myScenario, ResampleOption, "burnP3Plus_FireResampleOption")
+}
+
+# Handle unsupported inputs
+if(nrow(WindGrid) != 0) {
+  updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "warning")
 }
 
 if(nrow(GreenUp) != 0) {
