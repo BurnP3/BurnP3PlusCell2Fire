@@ -4,7 +4,7 @@
   displayName="Cell2Fire fire growth model add-on package for Burn-P3"
   isAddOn="True"
   extendsPackage="burnP3Plus"
-  version="0.3.1">
+  version="0.3.2">
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
@@ -53,6 +53,9 @@
 								<column name="GrassFuelLoading" displayName="Grass Fuel Loading" dataType="Double" format="0.00" validationType="Decimal" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
 								<column name="GrassCuring" displayName="Grass Curing" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
 							</columns>
+							<validations>
+                <validation validationType="Unique" columns="FuelType"/>
+              </validations>
 						</datasheet>
 					</datasheets>
 				</datafeed>
