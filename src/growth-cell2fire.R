@@ -43,7 +43,7 @@ elevationRaster <- tryCatch(
 if(nrow(FuelTypeCrosswalk) == 0) {
   updateRunLog("No fuels code crosswalk found! Using default crosswalk for Canadian Forest Service fuel codes.", type = "warning")
   FuelTypeCrosswalk <- fread(file.path(ssimEnvironment()$PackageDirectory, "Default Fuel Crosswalk.csv"))
-  saveDatasheet(myScenario, FuelTypeCrosswalk, "burnP3PlusCell2Fire_FuelCodeCrosswalk")
+  saveDatasheet(myScenario, as.data.frame(FuelTypeCrosswalk), "burnP3PlusCell2Fire_FuelCodeCrosswalk")
 }
 
 if(nrow(OutputOptions) == 0) {
