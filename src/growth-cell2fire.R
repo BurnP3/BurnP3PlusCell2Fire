@@ -153,7 +153,14 @@ if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
 
 # Copy Cell2Fire executable
 setwd(ssimEnvironment()$TempDirectory)
-file.copy(file.path(ssimEnvironment()$PackageDirectory, "Cell2Fire.exe"), ssimEnvironment()$TempDirectory, overwrite = T)
+
+# Select the appropriate executable for the system OS
+if(.Platform$OS.type == "unix") {
+  cell2fireExecutable <- "Cell2Fire"
+} else {
+  cell2fireExecutable <- "Cell2Fire.exe"
+}
+file.copy(file.path(ssimEnvironment()$PackageDirectory, cell2fireExecutable), ssimEnvironment()$TempDirectory, overwrite = T)
 
 # Create temp folder, ensure it is empty
 tempDir <- "cell2fire-inputs"
@@ -224,13 +231,15 @@ getBurnArea <- function(inputFile) {
 
 # Function to call Cell2Fire on the (global) parameter file
 runCell2Fire <- function() {
-  # Format folder paths
-  inputInstanceFolder <- tempDir %>%
-    str_c("\\\\")
-   outputFolder <- gridOutputFolder %>%
-    str_c("\\\\")
+  # Format folder paths if on windows
+  if(.Platform$OS.type != "unix") {
+    inputInstanceFolder <- tempDir %>%
+      str_c("\\\\")
+    outputFolder <- gridOutputFolder %>%
+      str_c("\\\\")  
+  }
   
-  shell(str_c("Cell2Fire.exe",
+  shell(str_c(cell2fireExecutable,
               " --input-instance-folder ", inputInstanceFolder,
               " --output-folder ", outputFolder,
               " --nsims ", nrow(DeterministicIgnitionLocation),
