@@ -4,14 +4,14 @@
   displayName="Cell2Fire fire growth model add-on package for BurnP3+"
   isAddOn="True"
   extendsPackage="burnP3Plus"
-  version="0.4.2"
+  version="0.4.3"
   url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
-				<datafeed name="BatchOption" displayName="Batch Options" dataScope="Library">
+				<datafeed name="BatchOption" displayName="Cell2Fire Batch Options" dataScope="Library">
 					<datasheets>
-						<datasheet name="BatchOption" displayName="Batch Options" isSingleRow="True">
+						<datasheet name="BatchOption" displayName="Cell2Fire Batch Options" isSingleRow="True">
 							<columns>
 								<column name="BatchOptionID" dataType="Integer" isPrimary="True"/>
 								<column name="BatchSize" displayName="Batch size (iterations):" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1"/>
@@ -54,9 +54,9 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<datafeed name="FuelCodeCrosswalk" displayName="Cell2Fire Fuel Code Crosswalk" dataScope="Project">
+				<datafeed name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk" dataScope="Project">
 					<datasheets>
-						<datasheet name="FuelCodeCrosswalk" displayName="Cell2Fire Fuel Code Crosswalk">
+						<datasheet name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk">
 							<columns>
 								<column name="FuelCodeCrosswalkID" dataType="Integer" isPrimary="True"/>
 								<column name="ProjectID" dataType="Integer" isCompositeIndex="True"/>
@@ -94,11 +94,11 @@
 		</transformer>
 	</transformers>
 	<layouts>
-		<layout name="coreforms_LibraryDatafeeds">
-			<item name="BatchOption"/>
+		<layout name="coreforms_LibraryDatafeeds" appendTo="core_Options">
+			<item name="BatchOption" displayName="Cell2Fire"/>
 		</layout>
-		<layout name ="coreforms_ProjectDatafeeds">
-	  	<item name="FuelCodeCrosswalk"/>
+		<layout name ="coreforms_ProjectDatafeeds" appendTo="burnP3Plus_FuelDefinition">
+	  	<item name="FuelCodeCrosswalk" displayName="Cell2Fire Crosswalk"/>
 	  </layout>
 	</layouts>
 	<updateProvider 
