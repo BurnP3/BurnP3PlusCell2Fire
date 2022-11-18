@@ -161,12 +161,16 @@ setwd(ssimEnvironment()$TempDirectory)
 
 # Select the appropriate executable for the system OS
 if(.Platform$OS.type == "unix") {
-  cell2fireExecutable <- "Cell2Fire"
+  cell2fireExecutable <- "./Cell2Fire"
 } else {
   cell2fireExecutable <- "Cell2Fire.exe"
 }
 file.copy(file.path(ssimEnvironment()$PackageDirectory, cell2fireExecutable), ssimEnvironment()$TempDirectory, overwrite = T)
 
+# Set as executable if in linux
+if(.Platform$OS.type == "unix")
+  system2("chmod", c("+x", cell2fireExecutable))
+  
 # Create temp folder, ensure it is empty
 tempDir <- "cell2fire-inputs"
 unlink(tempDir, recursive = T, force = T)
@@ -304,19 +308,24 @@ runCell2Fire <- function(numIgnitions) {
   resetFolder(gridOutputFolder)
   
   # Format folder paths if on windows
-  if(.Platform$OS.type != "unix") {
+  if(.Platform$OS.type == "unix") {
+    inputInstanceFolder <- tempDir %>%
+      str_c("/")
+    outputFolder <- gridOutputFolder %>%
+      str_c("/")  
+  } else {
     inputInstanceFolder <- tempDir %>%
       str_c("\\\\")
     outputFolder <- gridOutputFolder %>%
       str_c("\\\\")  
   }
   
-  shell(str_c(cell2fireExecutable,
-              " --input-instance-folder ", inputInstanceFolder,
-              " --output-folder ", outputFolder,
-              " --nsims ", numIgnitions,
-              " --nweathers ", numIgnitions,
-              " --ignitions --final-grid --Fire-Period-Length 1.0 --weather sequential"))
+  system2(cell2fireExecutable,
+          c("--input-instance-folder", inputInstanceFolder,
+            "--output-folder", outputFolder,
+            "--nsims", numIgnitions,
+            "--nweathers", numIgnitions,
+            "--ignitions --final-grid --Fire-Period-Length 1.0 --weather sequential"))
 }
 
 # Function to run one batch of iterations
