@@ -4,11 +4,24 @@
   displayName="Cell2Fire fire growth model add-on package for BurnP3+"
   isAddOn="True"
   extendsPackage="burnP3Plus"
-  version="0.4.1"
+  version="0.4.2"
   url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
+				<datafeed name="BatchOption" displayName="Batch Options" dataScope="Library">
+					<datasheets>
+						<datasheet name="BatchOption" displayName="Batch Options" isSingleRow="True">
+							<columns>
+								<column name="BatchOptionID" dataType="Integer" isPrimary="True"/>
+								<column name="BatchSize" displayName="Batch size (iterations):" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1"/>
+							</columns>
+							<defaultRecords>
+                <record columns="BatchSize" values="250"/>
+              </defaultRecords>
+						</datasheet>
+					</datasheets>
+				</datafeed>
 				<datafeed name="FuelCode" displayName="Cell2Fire Fuel Code List" dataScope="Project">
 					<datasheets>
 						<datasheet name="FuelCode" displayName="Cell2Fire Fuel Code List" valueMember="FuelCodeID" displayMember="FuelCode">
@@ -81,8 +94,16 @@
 		</transformer>
 	</transformers>
 	<layouts>
+		<layout name="coreforms_LibraryDatafeeds">
+			<item name="BatchOption"/>
+		</layout>
 		<layout name ="coreforms_ProjectDatafeeds">
 	  	<item name="FuelCodeCrosswalk"/>
 	  </layout>
 	</layouts>
+	<updateProvider 
+		schemaVersion="1" 
+		minPackageVersion="0.4.2" 
+		className="SyncroSim.Core.XMLUpdateProvider" 
+		classAssembly="SyncroSim.Core"/>
 </package>

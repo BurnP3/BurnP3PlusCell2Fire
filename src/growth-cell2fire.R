@@ -19,6 +19,7 @@ RunControl <- datasheet(myScenario, "burnP3Plus_RunControl")
 iterations <- seq(RunControl$MinimumIteration, RunControl$MaximumIteration)
 
 # Load remaining datasheets
+BatchOption <- datasheet(myScenario, "burnP3PlusCell2Fire_BatchOption")
 ResampleOption <- datasheet(myScenario, "burnP3Plus_FireResampleOption")
 DeterministicIgnitionCount <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionCount", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
 DeterministicIgnitionLocation <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionLocation", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
@@ -56,6 +57,12 @@ if(nrow(OutputOptionsSpatial) == 0) {
   updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.", type = "info")
   OutputOptionsSpatial[1,] <- rep(TRUE, length(OutputOptionsSpatial[1,]))
   saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
+}
+
+if(nrow(BatchOption) == 0) {
+  updateRunLog("No batch size chosen. Defaulting to batches of 250 iterations.", type = "info")
+  BatchOption[1,] <- c(250)
+  saveDatasheet(myScenario, BatchOption, "burnP3PlusCell2Fire_BatchOption")
 }
 
 if(nrow(ResampleOption) == 0) {
@@ -110,12 +117,10 @@ checkSpatialInput <- function(x, name, checkProjection = T, warnOnly = F) {
 # Check optional inputs
 checkSpatialInput(elevationRaster, "Elevation")
 
-## Set constants ----
+## Extract relevant parameters ----
 
 # Batch sizes to use to limit disk usage of output files
-batchSize <- 1000
-
-## Extract relevant parameters ----
+batchSize <- BatchOption$BatchSize
 
 # Burn maps must be kept to generate summarized maps later, this boolean summarizes
 # whether or not burn maps are needed
