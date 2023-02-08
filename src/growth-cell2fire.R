@@ -464,7 +464,20 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
   # Combine burn grids
   for(i in UniqueFireIDs)
     if(!is.na(i))
-      accumulator <- accumulator + as.matrix(fread(burnGrids[i],header = F))
+      burnArea <- as.matrix(fread(burnGrids[i],header = F)
+      
+      ## TODO: Define allPerims in Spatial output options.
+      if(allPerims == T){
+        rast(fuelsRaster, vals = burnArea) %>% 
+          mask(fuelsRaster) %>%
+            writeRaster(str_c(accumulatorOutputFolder, "/it", Iteration,"_fire_", UniqueFireID, ".tif"), 
+                overwrite = T,
+                NAflag = -9999,
+                wopt = list(filetype = "GTiff",
+                     datatype = "INT4S",
+                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))}
+                     
+      accumulator <- accumulator + burnArea)
   accumulator[accumulator != 0] <- 1
   
   # Mask and save as raster
