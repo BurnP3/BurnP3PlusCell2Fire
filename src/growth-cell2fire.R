@@ -467,7 +467,7 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
   
   # Combine burn grids
   for(i in seq_along(UniqueFireIDs)){
-    if(!is.na(i)){
+    if(!is.na(UniqueFireIDs[i])){
       burnArea <- as.matrix(fread(burnGrids[UniqueFireIDs[i]],header = F))
       
       if(OutputOptionsSpatial$AllPerim == T){
