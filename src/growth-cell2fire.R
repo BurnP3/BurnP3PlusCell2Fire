@@ -124,7 +124,7 @@ batchSize <- BatchOption$BatchSize
 
 # Burn maps must be kept to generate summarized maps later, this boolean summarizes
 # whether or not burn maps are needed
-saveBurnMaps <- any(OutputOptionsSpatial$BurnMap, OutputOptionsSpatial$BurnProbability, OutputOptionsSpatial$BurnCount)
+saveBurnMaps <- any(OutputOptionsSpatial$BurnMap, OutputOptionsSpatial$BurnProbability, OutputOptionsSpatial$BurnCount,OutputOptionsSpatial$AllPerim)
 
 minimumFireSize <- ResampleOption$MinimumFireSize
 
@@ -193,10 +193,13 @@ ignitionFile    <- file.path(tempDir, "Ignitions.csv")
 # Create folders for various outputs
 gridOutputFolder <- "cell2fire-outputs"
 accumulatorOutputFolder <- "cell2fire-accumulator"
+allPerimOutputFolder <- "cell2fire-allperim"
 unlink(gridOutputFolder, recursive = T, force = T)
 unlink(accumulatorOutputFolder, recursive = T, force = T)
+unlink(allPerimOutputFolder, recursive = T, force = T)
 dir.create(gridOutputFolder, showWarnings = F)
 dir.create(accumulatorOutputFolder, showWarnings = F)
+dir.create(allPerimOutputFolder, showWarnings = F)
 
 
 ## Function Definitions ----
@@ -299,13 +302,14 @@ processOutputs <- function(batchOutput, rawOutputGridPaths) {
     
   # Summarize the FireIDs to export by Iteration
   ignitionsToExportTable <- batchOutput %>%
-    dplyr::select(Iteration, UniqueFireID) %>%
+    dplyr::select(Iteration, UniqueFireID, FireID) %>%
     group_by(Iteration) %>%
-    summarize(UniqueFireIDs = list(UniqueFireID))
+    summarize(UniqueFireIDs = list(UniqueFireID),
+              FireIDs = list(FireID))
   
   # Generate burn count maps
   for (i in seq_len(nrow(ignitionsToExportTable)))
-    generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths)
+    generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths, FireIDs = ignitionsToExportTable$FireIDs[[i]])
 }
 
 # Function to call Cell2Fire on the (global) parameter file
@@ -457,14 +461,27 @@ generateIgnitionFile <- function(CellIDs){
 }
 
 # Function to summarize individual burn grids by iteration
-generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
+generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireIDs) {
   # initialize empty matrix
   accumulator <- matrix(0, nrow(fuelsRaster), ncol(fuelsRaster))
   
   # Combine burn grids
-  for(i in UniqueFireIDs)
-    if(!is.na(i))
-      accumulator <- accumulator + as.matrix(fread(burnGrids[i],header = F))
+  for(i in seq_along(UniqueFireIDs)){
+    if(!is.na(UniqueFireIDs[i])){
+      burnArea <- as.matrix(fread(burnGrids[UniqueFireIDs[i]],header = F))
+      
+      if(OutputOptionsSpatial$AllPerim == T){
+        rast(fuelsRaster, vals = burnArea) %>% 
+          mask(fuelsRaster) %>%
+            writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"), 
+                overwrite = T,
+                NAflag = -9999,
+                wopt = list(filetype = "GTiff",
+                     datatype = "INT4S",
+                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
+        }
+      }
+      accumulator <- accumulator + burnArea
   accumulator[accumulator != 0] <- 1
   
   # Mask and save as raster
@@ -475,7 +492,7 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids) {
                 NAflag = -9999,
                 wopt = list(filetype = "GTiff",
                      datatype = "INT4S",
-                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
+                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))}
 }
 
 
@@ -670,6 +687,28 @@ if(saveBurnMaps) {
   
   updateRunLog("Finished accumulating burn maps in ", updateBreakpoint())
 }
+
+## All Perims
+if(OutputOptionsSpatial$AllPerim){
+  progressBar(type = "message", message = "Saving individual burn maps...")
+
+  # Build table of burn maps and save to SyncroSim
+  OutputAllPerim <- 
+    tibble(
+      FileName = list.files(allPerimOutputFolder, full.names = T) %>% normalizePath(),
+      Iteration = str_extract(FileName, "\\d+_fire") %>% str_sub(end = -6) %>% as.integer(),
+      FireID = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer(),
+      Timestep = FireID) %>%
+    filter(Iteration %in% iterations) %>%
+    as.data.frame
+  
+  # Output if there are records to save
+  if(nrow(OutputAllPerim) > 0)
+    saveDatasheet(myScenario, OutputAllPerim, "burnP3Plus_OutputAllPerim", append = T)
+  
+  updateRunLog("Finished individual burn maps in ", updateBreakpoint())
+}
+
 
 ## Burn perimeters ----
 if(OutputOptionsSpatial$BurnPerimeter) {
