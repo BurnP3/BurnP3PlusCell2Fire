@@ -19,7 +19,7 @@ RunControl <- datasheet(myScenario, "burnP3Plus_RunControl")
 iterations <- seq(RunControl$MinimumIteration, RunControl$MaximumIteration)
 
 # Load remaining datasheets
-BatchOption <- datasheet(myScenario, "burnP3PlusCell2Fire_BatchOption")
+BatchOption <- datasheet(myScenario, "burnP3Plus_BatchOption")
 ResampleOption <- datasheet(myScenario, "burnP3Plus_FireResampleOption")
 DeterministicIgnitionCount <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionCount", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
 DeterministicIgnitionLocation <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionLocation", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
@@ -72,7 +72,7 @@ if(nrow(OutputOptionsSpatial) == 0) {
 if(nrow(BatchOption) == 0) {
   updateRunLog("No batch size chosen. Defaulting to batches of 250 iterations.", type = "info")
   BatchOption[1,] <- c(250)
-  saveDatasheet(myScenario, BatchOption, "burnP3PlusCell2Fire_BatchOption")
+  saveDatasheet(myScenario, BatchOption, "burnP3Plus_BatchOption")
 }
 
 if(nrow(ResampleOption) == 0) {
