@@ -19,7 +19,7 @@ RunControl <- datasheet(myScenario, "burnP3Plus_RunControl")
 iterations <- seq(RunControl$MinimumIteration, RunControl$MaximumIteration)
 
 # Load remaining datasheets
-BatchOption <- datasheet(myScenario, "burnP3PlusCell2Fire_BatchOption")
+BatchOption <- datasheet(myScenario, "burnP3Plus_BatchOption")
 ResampleOption <- datasheet(myScenario, "burnP3Plus_FireResampleOption")
 DeterministicIgnitionCount <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionCount", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
 DeterministicIgnitionLocation <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionLocation", lookupsAsFactors = F, optional = T) %>% unique %>% filter(Iteration %in% iterations)
@@ -51,18 +51,28 @@ if(nrow(OutputOptions) == 0) {
   updateRunLog("No tabular output options chosen. Defaulting to keeping all tabular outputs.", type = "info")
   OutputOptions[1,] <- rep(TRUE, length(OutputOptions[1,]))
   saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
+} else if (any(is.na(OutputOptions))) {
+  updateRunLog("Missing one or more tabular output options. Defaulting to keeping unspecified tabular outputs.", type = "info")
+  OutputOptions <- OutputOptions %>%
+    replace(is.na(.), TRUE)
+  saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
 }
 
 if(nrow(OutputOptionsSpatial) == 0) {
   updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.", type = "info")
   OutputOptionsSpatial[1,] <- rep(TRUE, length(OutputOptionsSpatial[1,]))
   saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
+} else if (any(is.na(OutputOptionsSpatial))) {
+  updateRunLog("Missing one or more spatial output options. Defaulting to keeping unspecified spatial outputs.", type = "info")
+  OutputOptionsSpatial <- OutputOptionsSpatial %>%
+    replace(is.na(.), TRUE)
+  saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
 }
 
 if(nrow(BatchOption) == 0) {
   updateRunLog("No batch size chosen. Defaulting to batches of 250 iterations.", type = "info")
   BatchOption[1,] <- c(250)
-  saveDatasheet(myScenario, BatchOption, "burnP3PlusCell2Fire_BatchOption")
+  saveDatasheet(myScenario, BatchOption, "burnP3Plus_BatchOption")
 }
 
 if(nrow(ResampleOption) == 0) {
