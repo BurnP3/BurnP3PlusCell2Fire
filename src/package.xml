@@ -9,19 +9,6 @@
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
-				<datafeed name="BatchOption" displayName="Cell2Fire Batch Options" dataScope="Library">
-					<datasheets>
-						<datasheet name="BatchOption" displayName="Cell2Fire Batch Options" isSingleRow="True">
-							<columns>
-								<column name="BatchOptionID" dataType="Integer" isPrimary="True"/>
-								<column name="BatchSize" displayName="Batch size (iterations):" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1"/>
-							</columns>
-							<defaultRecords>
-                <record columns="BatchSize" values="250"/>
-              </defaultRecords>
-						</datasheet>
-					</datasheets>
-				</datafeed>
 				<datafeed name="FuelCode" displayName="Cell2Fire Fuel Code List" dataScope="Project">
 					<datasheets>
 						<datasheet name="FuelCode" displayName="Cell2Fire Fuel Code List" valueMember="FuelCodeID" displayMember="FuelCode">
@@ -31,26 +18,26 @@
 								<column name="FuelCode" displayName="Fuel Code" dataType="String"/>
 							</columns>
 							<defaultRecords>
-                <record columns="FuelCode" values="NF"/>
-                <record columns="FuelCode" values="C1"/>
-                <record columns="FuelCode" values="C2"/>
-                <record columns="FuelCode" values="C3"/>
-                <record columns="FuelCode" values="C4"/>
-                <record columns="FuelCode" values="C5"/>
-                <record columns="FuelCode" values="C6"/>
-                <record columns="FuelCode" values="C7"/>
-                <record columns="FuelCode" values="D1"/>
-                <record columns="FuelCode" values="D2"/>
-                <record columns="FuelCode" values="M1"/>
-                <record columns="FuelCode" values="M2"/>
-                <record columns="FuelCode" values="M3"/>
-                <record columns="FuelCode" values="M4"/>
-                <record columns="FuelCode" values="O1a"/>
-                <record columns="FuelCode" values="O1b"/>
-                <record columns="FuelCode" values="S1"/>
-                <record columns="FuelCode" values="S2"/>
-                <record columns="FuelCode" values="S3"/>
-              </defaultRecords>
+								<record columns="FuelCode" values="NF"/>
+								<record columns="FuelCode" values="C1"/>
+								<record columns="FuelCode" values="C2"/>
+								<record columns="FuelCode" values="C3"/>
+								<record columns="FuelCode" values="C4"/>
+								<record columns="FuelCode" values="C5"/>
+								<record columns="FuelCode" values="C6"/>
+								<record columns="FuelCode" values="C7"/>
+								<record columns="FuelCode" values="D1"/>
+								<record columns="FuelCode" values="D2"/>
+								<record columns="FuelCode" values="M1"/>
+								<record columns="FuelCode" values="M2"/>
+								<record columns="FuelCode" values="M3"/>
+								<record columns="FuelCode" values="M4"/>
+								<record columns="FuelCode" values="O1a"/>
+								<record columns="FuelCode" values="O1b"/>
+								<record columns="FuelCode" values="S1"/>
+								<record columns="FuelCode" values="S2"/>
+								<record columns="FuelCode" values="S3"/>
+              				</defaultRecords>
 						</datasheet>
 					</datasheets>
 				</datafeed>
@@ -68,8 +55,8 @@
 								<column name="GrassCuring" displayName="Grass Curing" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
 							</columns>
 							<validations>
-                <validation validationType="Unique" columns="FuelType"/>
-              </validations>
+                				<validation validationType="Unique" columns="FuelType"/>
+              				</validations>
 						</datasheet>
 					</datasheets>
 				</datafeed>
@@ -95,9 +82,6 @@
 		</transformer>
 	</transformers>
 	<layouts>
-		<layout name="coreforms_LibraryDatafeeds" appendTo="core_Options">
-			<item name="BatchOption" displayName="Cell2Fire"/>
-		</layout>
 		<layout name ="coreforms_ProjectDatafeeds" appendTo="burnP3Plus_FuelDefinition">
 	  	<item name="FuelCodeCrosswalk" displayName="Cell2Fire Crosswalk"/>
 	  </layout>
