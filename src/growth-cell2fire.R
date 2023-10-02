@@ -27,6 +27,7 @@ DeterministicBurnCondition <- datasheet(myScenario, "burnP3Plus_DeterministicBur
 FuelType <- datasheet(myScenario, "burnP3Plus_FuelType", lookupsAsFactors = F)
 FuelTypeCrosswalk <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCodeCrosswalk", lookupsAsFactors = F, optional = T)
 ValidFuelCodes <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCode") %>% pull()
+SeasonTable <- datasheet(myScenario, "burnP3Plus_Season", lookupsAsFactors = F, optional = T, includeKey = T)
 WindGrid <- datasheet(myScenario, "burnP3Plus_WindGrid", lookupsAsFactors = F, optional = T)
 GreenUp <- datasheet(myScenario, "burnP3Plus_GreenUp", lookupsAsFactors = F, optional = T)
 Curing <- datasheet(myScenario, "burnP3Plus_Curing", lookupsAsFactors = F, optional = T)
@@ -135,7 +136,17 @@ batchSize <- BatchOption$BatchSize
 
 # Burn maps must be kept to generate summarized maps later, this boolean summarizes
 # whether or not burn maps are needed
-saveBurnMaps <- any(OutputOptionsSpatial$BurnMap, OutputOptionsSpatial$BurnProbability, OutputOptionsSpatial$BurnCount,OutputOptionsSpatial$AllPerim)
+saveBurnMaps <- any(OutputOptionsSpatial$BurnMap, OutputOptionsSpatial$SeasonalBurnMap,
+                    OutputOptionsSpatial$BurnProbability, OutputOptionsSpatial$SeasonalBurnProbability,
+                    OutputOptionsSpatial$RelativeBurnProbability, OutputOptionsSpatial$SeasonalRelativeBurnProbability,
+                    OutputOptionsSpatial$BurnCount, OutputOptionsSpatial$SeasonalBurnCount,
+                    OutputOptionsSpatial$AllPerim)
+
+# Decide whether or not to save outputs seasonally
+saveSeasonalBurnMaps <- any(OutputOptionsSpatial$SeasonalBurnMap,
+                            OutputOptionsSpatial$SeasonalBurnProbability,
+                            OutputOptionsSpatial$SeasonalRelativeBurnProbability,
+                            OutputOptionsSpatial$SeasonalBurnCount)
 
 minimumFireSize <- ResampleOption$MinimumFireSize
 
@@ -204,12 +215,14 @@ ignitionFile    <- file.path(tempDir, "Ignitions.csv")
 # Create folders for various outputs
 gridOutputFolder <- "cell2fire-outputs"
 accumulatorOutputFolder <- "cell2fire-accumulator"
+seasonalAccumulatorOutputFolder <- "cell2fire-accumulator-seasonal"
 allPerimOutputFolder <- "cell2fire-allperim"
 unlink(gridOutputFolder, recursive = T, force = T)
 unlink(accumulatorOutputFolder, recursive = T, force = T)
 unlink(allPerimOutputFolder, recursive = T, force = T)
 dir.create(gridOutputFolder, showWarnings = F)
 dir.create(accumulatorOutputFolder, showWarnings = F)
+dir.create(seasonalAccumulatorOutputFolder, showWarnings = F)
 dir.create(allPerimOutputFolder, showWarnings = F)
 
 
@@ -313,14 +326,15 @@ processOutputs <- function(batchOutput, rawOutputGridPaths) {
     
   # Summarize the FireIDs to export by Iteration
   ignitionsToExportTable <- batchOutput %>%
-    dplyr::select(Iteration, UniqueFireID, FireID) %>%
+    dplyr::select(Iteration, UniqueFireID, FireID, Season) %>%
     group_by(Iteration) %>%
     summarize(UniqueFireIDs = list(UniqueFireID),
-              FireIDs = list(FireID))
+              FireIDs = list(FireID),
+              Seasons = list(Season))
   
   # Generate burn count maps
   for (i in seq_len(nrow(ignitionsToExportTable)))
-    generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths, FireIDs = ignitionsToExportTable$FireIDs[[i]])
+    generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths, FireIDs = ignitionsToExportTable$FireIDs[[i]], Seasons = ignitionsToExportTable$Seasons[[i]])
 }
 
 # Function to call Cell2Fire on the (global) parameter file
@@ -371,7 +385,7 @@ runBatch <- function(batchInputs) {
   
   # Convert and save spatial outputs as needed
   batchOutput <- batchInputs %>%
-    select(Iteration, FireID) %>%
+    select(Iteration, FireID, Season) %>%
     mutate(
       UniqueFireID = row_number(),
       Area = burnAreas) %>%
@@ -390,7 +404,7 @@ runBatch <- function(batchInputs) {
   
   # Return relevant outputs
   batchOutput %>%
-    select(-UniqueFireID) %>%
+    select(-UniqueFireID, -Season) %>%
     return()
 }
 
@@ -472,29 +486,51 @@ generateIgnitionFile <- function(CellIDs){
 }
 
 # Function to summarize individual burn grids by iteration
-generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireIDs) {
+generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireIDs, Seasons) {
+
   # initialize empty matrix
   accumulator <- matrix(0, nrow(fuelsRaster), ncol(fuelsRaster))
+
+  # initialize a list of empty matrices for each season
+  seasonValues <- SeasonTable %>%
+    filter(Name != "All") %>%
+    pull(Name) %>%
+    unique
+  seasonalAccumulators <- accumulator %>% 
+    list() %>%
+    rep(length(seasonValues)) %>%
+    set_names(seasonValues)
   
   # Combine burn grids
   for(i in seq_along(UniqueFireIDs)){
     if(!is.na(UniqueFireIDs[i])){
+      # Read in and add current burn map
       burnArea <- as.matrix(fread(burnGrids[UniqueFireIDs[i]],header = F))
+      accumulator <- accumulator + burnArea
+      
+      # Add to seasonal accumulator
+      if(saveSeasonalBurnMaps) {
+        thisSeason <- Seasons[i]
+        if (thisSeason %in% seasonValues)
+          seasonalAccumulators[[thisSeason]] <- seasonalAccumulators[[thisSeason]] + burnArea
+      }
       
       if(OutputOptionsSpatial$AllPerim == T){
         rast(fuelsRaster, vals = burnArea) %>% 
           mask(fuelsRaster) %>%
-            writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"), 
-                overwrite = T,
-                NAflag = -9999,
-                wopt = list(filetype = "GTiff",
-                     datatype = "INT4S",
-                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
-        }
+          writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"), 
+              overwrite = T,
+              NAflag = -9999,
+              wopt = list(filetype = "GTiff",
+                    datatype = "INT4S",
+                    gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
       }
-      accumulator <- accumulator + burnArea
+    }
+  }
+
+  # Binarize accumulator to burn or not
   accumulator[accumulator != 0] <- 1
-  
+
   # Mask and save as raster
   rast(fuelsRaster, vals = accumulator) %>%
     mask(fuelsRaster) %>%
@@ -502,8 +538,26 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
                 overwrite = T,
                 NAflag = -9999,
                 wopt = list(filetype = "GTiff",
-                     datatype = "INT4S",
-                     gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))}
+                    datatype = "INT4S",
+                    gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
+
+  # Repeat for each seasonal accumulator
+  if(saveSeasonalBurnMaps) {
+    for (season in seasonValues) {
+      # Binarize accumulator to burn or not
+      seasonalAccumulators[[season]][seasonalAccumulators[[season]] != 0] <- 1
+
+      # Mask and save as raster
+      rast(fuelsRaster, vals = seasonalAccumulators[[season]]) %>%
+        mask(fuelsRaster) %>%
+        writeRaster(str_c(seasonalAccumulatorOutputFolder, "/it", Iteration, "-sn", lookup(season, SeasonTable$Name, SeasonTable$SeasonID), ".tif"), 
+                    overwrite = T,
+                    NAflag = -9999,
+                    wopt = list(filetype = "GTiff",
+                        datatype = "INT4S",
+                        gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
+    }
+  }
 }
 
 
@@ -562,7 +616,7 @@ fwrite(spatialData, spatialDataFile, na = "")
 # Convert ignition location to cell ID
 ignitionLocation <- DeterministicIgnitionLocation %>%
   mutate(CellID = cellFromLatLong(fuelsRaster, Latitude, Longitude)) %>%
-  dplyr::select(Iteration, FireID, CellID) %>%
+  dplyr::select(Iteration, FireID, CellID, Season) %>%
   arrange(Iteration, FireID)
 
 # Generate empty weather template file
@@ -688,9 +742,25 @@ if(saveBurnMaps) {
     tibble(
       FileName = list.files(accumulatorOutputFolder, full.names = T) %>% normalizePath(),
       Iteration = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer(),
-      Timestep = 0) %>%
+      Timestep = 0,
+      Season = "All") %>%
     filter(Iteration %in% iterations) %>%
     as.data.frame
+  
+  if(saveSeasonalBurnMaps) {
+    # If seasonal burn maps have been saved, append them to the table
+    OutputBurnMap <- OutputBurnMap %>%
+      bind_rows(
+        tibble(
+          FileName = list.files(seasonalAccumulatorOutputFolder, full.names = T) %>% normalizePath(),
+          Iteration = str_extract(FileName, "\\d+-sn") %>% str_sub(end = -4) %>% as.integer(),
+          Timestep = 0,
+          Season = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer()) %>%
+        mutate(
+          Season = lookup(Season, SeasonTable$SeasonID, SeasonTable$Name)) %>%
+        filter(Iteration %in% iterations)) %>%
+      as.data.frame
+  }
   
   # Output if there are records to save
   if(nrow(OutputBurnMap) > 0)
