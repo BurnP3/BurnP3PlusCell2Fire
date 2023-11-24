@@ -2,12 +2,28 @@
 native_proj_lib <- Sys.getenv("PROJ_LIB")
 Sys.unsetenv("PROJ_LIB")
 
-# Load packages ----
+# Check and load packages ----
 library(rsyncrosim)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(terra))
 suppressPackageStartupMessages(library(data.table))
+
+checkPackageVersion <- function(packageString, minimumVersion){
+  result <- compareVersion(as.character(packageVersion(packageString)), minimumVersion)
+  if (result < 0) {
+    stop("The R package ", packageString, " (", as.character(packageVersion(packageString)), ") does not meet the minimum requirements (", minimumVersion, ") for this version of BurnP3+ Cell2Fire. Please upgrade this package and rerun this scenario.", type = "warning")
+  } else if (result > 0) {
+    updateRunLog("Using a newer version of ", packageString, " (", as.character(packageVersion(packageString)), ") than BurnP3+ Cell2Fire was built against (", minimumVersion, ").", type = "info")
+  }
+}
+
+checkPackageVersion("rsyncrosim", "1.4.8")
+checkPackageVersion("tidyverse",  "2.0.0")
+checkPackageVersion("terra",      "1.2.5")
+checkPackageVersion("dplyr",      "1.1.2")
+checkPackageVersion("codetools",  "0.2.15")
+checkPackageVersion("data.table", "1.14.8")
 
 # Setup ----
 progressBar(type = "message", message = "Preparing inputs...")
