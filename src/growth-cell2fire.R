@@ -191,7 +191,7 @@ getRunContext <- function() {
 runContext <- getRunContext()
 
 # Determine which subset of the extra iterations this job is responsible for
-if(runContext$numJobs > 1)
+if(runContext$numJobs > 1 & length(extraIgnitionIDs) > 0)
   extraIgnitionIDs <- split(extraIgnitionIDs, cut(seq_along(extraIgnitionIDs), runContext$numJobs, labels = F)) %>% pluck(as.character(runContext$jobIndex))
 
 # Filter deterministic tables accordingly
