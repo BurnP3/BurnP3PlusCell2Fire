@@ -20,9 +20,9 @@ checkPackageVersion <- function(packageString, minimumVersion){
 
 checkPackageVersion("rsyncrosim", "1.4.8")
 checkPackageVersion("tidyverse",  "2.0.0")
-checkPackageVersion("terra",      "1.2.5")
+checkPackageVersion("terra",      "1.5.21")
 checkPackageVersion("dplyr",      "1.1.2")
-checkPackageVersion("codetools",  "0.2.15")
+checkPackageVersion("codetools",  "0.2.19")
 checkPackageVersion("data.table", "1.14.8")
 
 # Setup ----
@@ -191,7 +191,7 @@ getRunContext <- function() {
 runContext <- getRunContext()
 
 # Determine which subset of the extra iterations this job is responsible for
-if(runContext$numJobs > 1)
+if(runContext$numJobs > 1 & length(extraIgnitionIDs) > 0)
   extraIgnitionIDs <- split(extraIgnitionIDs, cut(seq_along(extraIgnitionIDs), runContext$numJobs, labels = F)) %>% pluck(as.character(runContext$jobIndex))
 
 # Filter deterministic tables accordingly
@@ -697,18 +697,21 @@ generateWeatherTemplateFile()
 # Combine deterministic input tables ----
 fireGrowthInputs <- DeterministicBurnCondition %>%
   # Group by iteration and fire ID for the `growFire()` function
-  group_by(Iteration, FireID) %>%
-  nest %>%
+  nest(.by = c(Iteration, FireID)) %>%
   
   # Add ignition location information
   left_join(ignitionLocation, c("Iteration", "FireID")) %>%
   
+  # Split extra ignitions into reasonable batch sizes
+  mutate(extraIgnitionsBatch = (row_number() - 1) %/% batchSize + 1, 
+         extraIgnitionsBatch = ifelse(Iteration == 0, extraIgnitionsBatch, 0)) %>%
+
   # Group by just iteration for the `runIteration()` function
-  group_by(Iteration) %>%
-  nest %>%
+  nest(.by = c(Iteration, extraIgnitionsBatch)) %>% 
+  dplyr::select(-extraIgnitionsBatch) %>%
   
   # Finally split into batches of the appropriate size
-  group_by(batchID = (row_number() - 1) %/% batchSize) %>%
+  group_by(batchID = (cumsum(map_int(data, nrow)) - 1) %/% batchSize) %>%
   group_split(.keep = F)
 
 updateRunLog("Finished generating shared inputs in ", updateBreakpoint())
