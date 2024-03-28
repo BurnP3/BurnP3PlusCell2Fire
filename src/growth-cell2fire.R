@@ -775,7 +775,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
                                !is.null(fuelsRaster) ~ fuelsRaster[][cell]),
         WeatherZone = lookup(weatherzoneID, WeatherZoneTable$ID, WeatherZoneTable$Name),
         FireZone = lookup(firezoneID, FireZoneTable$ID, FireZoneTable$Name),
-        FuelType = lookup(fueltypeID, FuelType$ID, FuelType$Name))
+        FuelType = lookup(fueltypeID, FuelType$ID, FuelType$Name)) %>%
       
       # Incorporate Lat and Long and add TimeStep manually
       mutate(Timestep = 0) %>%
