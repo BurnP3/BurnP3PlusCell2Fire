@@ -18,7 +18,7 @@ checkPackageVersion <- function(packageString, minimumVersion){
   }
 }
 
-checkPackageVersion("rsyncrosim", "1.4.8")
+checkPackageVersion("rsyncrosim", "1.5.0")
 checkPackageVersion("tidyverse",  "2.0.0")
 checkPackageVersion("terra",      "1.5.21")
 checkPackageVersion("dplyr",      "1.1.2")
@@ -36,18 +36,18 @@ currentBreakPoint <- proc.time()
 myScenario <- scenario()
 
 # Load Run Controls and identify iterations to run
-RunControl <- datasheet(myScenario, "burnP3Plus_RunControl")
+RunControl <- datasheet(myScenario, "burnP3Plus_RunControl", returnInvisible = T)
 iterations <- seq(RunControl$MinimumIteration, RunControl$MaximumIteration)
 
 # Load remaining datasheets
 BatchOption <- datasheet(myScenario, "burnP3Plus_BatchOption")
 ResampleOption <- datasheet(myScenario, "burnP3Plus_FireResampleOption")
-DeterministicIgnitionLocation <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionLocation", lookupsAsFactors = F, optional = T) %>% unique
-DeterministicBurnCondition <- datasheet(myScenario, "burnP3Plus_DeterministicBurnCondition", lookupsAsFactors = F, optional = T) %>% unique
+DeterministicIgnitionLocation <- datasheet(myScenario, "burnP3Plus_DeterministicIgnitionLocation", lookupsAsFactors = F, optional = T, returnInvisible = T) %>% unique
+DeterministicBurnCondition <- datasheet(myScenario, "burnP3Plus_DeterministicBurnCondition", lookupsAsFactors = F, optional = T, returnInvisible = T) %>% unique
 FuelType <- datasheet(myScenario, "burnP3Plus_FuelType", lookupsAsFactors = F)
 FuelTypeCrosswalk <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCodeCrosswalk", lookupsAsFactors = F, optional = T)
 ValidFuelCodes <- datasheet(myScenario, "burnP3PlusCell2Fire_FuelCode") %>% pull()
-SeasonTable <- datasheet(myScenario, "burnP3Plus_Season", lookupsAsFactors = F, optional = T, includeKey = T)
+SeasonTable <- datasheet(myScenario, "burnP3Plus_Season", lookupsAsFactors = F, optional = T, includeKey = T, returnInvisible = T)
 WindGrid <- datasheet(myScenario, "burnP3Plus_WindGrid", lookupsAsFactors = F, optional = T)
 GreenUp <- datasheet(myScenario, "burnP3Plus_GreenUp", lookupsAsFactors = F, optional = T)
 Curing <- datasheet(myScenario, "burnP3Plus_Curing", lookupsAsFactors = F, optional = T)
@@ -246,7 +246,7 @@ if(any(!FuelType$Code %in% ValidFuelCodes))
 fuelIdsPresent <- fuelsRaster %>% unique() %>% pull
 if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
   stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ", 
-       dplyr::setdiff(fuelIdsPresent, data.frame(Fuels = FuelType[,"ID"])) %>% str_c(collapse = " "))
+       dplyr::setdiff(fuelIdsPresent,  FuelType[,"ID"]) %>% str_c(collapse = " "))
 
 ## Setup files and folders ----
 
