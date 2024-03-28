@@ -767,9 +767,15 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
       left_join(DeterministicIgnitionLocation, by = c("Iteration", "FireID")) %>%
       mutate(
         cell = cellFromLatLong(fuelsRaster, Latitude, Longitude),
-        FireZone = ifelse(!is.null(fireZoneRaster), fireZoneRaster[][cell] %>% lookup(FireZoneTable$ID, FireZoneTable$Name), ""),
-        WeatherZone = ifelse(!is.null(weatherZoneRaster), weatherZoneRaster[][cell] %>% lookup(WeatherZoneTable$ID, WeatherZoneTable$Name), ""),
-        FuelType = fuelsRaster[][cell] %>% lookup(FuelType$ID, FuelType$Name)) %>%
+        weatherzoneID = case_when(is.null(weatherZoneRaster) ~ 0,
+                                  !is.null(weatherZoneRaster) ~ weatherZoneRaster[][cell]),
+        firezoneID = case_when(is.null(fireZoneRaster) ~ 0,
+                               !is.null(fireZoneRaster) ~ fireZoneRaster[][cell]),
+        fueltypeID = case_when(is.null(fuelsRaster) ~ 0,
+                               !is.null(fuelsRaster) ~ fuelsRaster[][cell]),
+        WeatherZone = lookup(weatherzoneID, WeatherZoneTable$ID, WeatherZoneTable$Name),
+        FireZone = lookup(firezoneID, FireZoneTable$ID, FireZoneTable$Name),
+        FuelType = lookup(fueltypeID, FuelType$ID, FuelType$Name))
       
       # Incorporate Lat and Long and add TimeStep manually
       mutate(Timestep = 0) %>%
