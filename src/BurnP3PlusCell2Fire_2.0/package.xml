@@ -3,7 +3,7 @@
 	
 	<!--Project Datasheets-->
 
-		<dataSheet name="FuelCode" displayName="Cell2Fire Fuel Code List" valueMember="FuelCodeID" displayMember="FuelCode" dataScope="Project">
+		<dataSheet name="FuelCode" displayName="Cell2Fire Fuel Code List" displayMember="FuelCode" dataScope="Project">
 			<column name="FuelCode" displayName="Fuel Code" dataType="String"/>
 			<record columns="FuelCode" values="NF"/>
 			<record columns="FuelCode" values="C1"/>
