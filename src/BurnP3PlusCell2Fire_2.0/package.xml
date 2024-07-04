@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package name="burnP3PlusCell2Fire" displayName="Cell2Fire fire growth model add-on package for BurnP3+" isAddOn="True" extendsPackage="burnP3Plus" version="2.0.0" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
 	
+	<!--Project Datasheets-->
+
 		<dataSheet name="FuelCode" displayName="Cell2Fire Fuel Code List" valueMember="FuelCodeID" displayMember="FuelCode" dataScope="Project">
-			<column name="FuelCodeID" dataType="Integer" isPrimary="True"/>
-			<column name="ProjectID" dataType="Integer" isCompositeIndex="True"/>
 			<column name="FuelCode" displayName="Fuel Code" dataType="String"/>
 			<record columns="FuelCode" values="NF"/>
 			<record columns="FuelCode" values="C1"/>
@@ -27,8 +27,6 @@
 		</dataSheet>
 
 		<dataSheet name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk" dataScope="Project">
-			<column name="FuelCodeCrosswalkID" dataType="Integer" isPrimary="True"/>
-			<column name="ProjectID" dataType="Integer" isCompositeIndex="True"/>
 			<column name="FuelType" displayName="Fuel Type" dataType="Integer" validationType="Datasheet" formula1="burnP3Plus_FuelType" allowDbNull="False"/>
 			<column name="Code" displayName="Cell2Fire Fuel Code" dataType="Integer" validationType="Datasheet" formula1="FuelCode"/>
 			<column name="PercentConifer" displayName="Percent Conifer" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
@@ -38,7 +36,10 @@
 			<validation validationType="Unique" columns="FuelType"/>
 		</dataSheet>
 
-	<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
+	<!--Transformers-->
+
+	<!--Fire Growth Cell2Fire Transformer-->
+	<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml" condaEnvVersion="1">
 			<dataSheet name="burnP3Plus_RunControl" type="Input"/>
 			<dataSheet name="burnP3Plus_FireResampleOption" type="Input"/>
 			<dataSheet name="burnP3Plus_LandscapeRasters" type="Input"/>
@@ -57,7 +58,10 @@
 			<dataSheet name="burnP3Plus_OutputAllPerim" type="Output"/>
 	</transformer>
 
-		<layout name ="coreforms_ProjectDatafeeds" appendTo="burnP3Plus_FuelDefinition">
+	<!--Layouts-->
+
+	<!--Project Layout-->
+		<layout type="Project">
 			<item name="FuelCodeCrosswalk" displayName="Cell2Fire Crosswalk"/>
 		</layout>
 
