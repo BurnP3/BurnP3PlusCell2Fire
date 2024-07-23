@@ -118,19 +118,19 @@ if(nrow(WeatherZoneTable) == 0)
 
 # Handle unsupported inputs
 if(nrow(WindGrid) != 0) {
-  updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "warning")
+  updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "info")
 }
 
 if(nrow(GreenUp) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support Green Up. Green Up options ignored.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support Green Up. Green Up options ignored.", type = "info")
 }
 
 if(nrow(Curing) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support specifying Curing by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify curing by fuel type.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support specifying Curing by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify curing by fuel type.", type = "info")
 }
 
 if(nrow(FuelLoad) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support specifying Fuel Loading by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify fuel loading by fuel type.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support specifying Fuel Loading by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify fuel loading by fuel type.", type = "info")
 }
 
 ## Check raster inputs for consistency ----
@@ -851,7 +851,7 @@ if(saveBurnMaps) {
           Timestep = 0,
           Season = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer()) %>%
           mutate(
-            Season = lookup(Season, SeasonTable$SeasonID, SeasonTable$Name)) %>%
+            Season = lookup(Season, SeasonTable$SeasonId, SeasonTable$Name)) %>%
           filter(Iteration %in% iterations)) %>%
       as.data.frame
   }
