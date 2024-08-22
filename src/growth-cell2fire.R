@@ -26,7 +26,7 @@ checkPackageVersion <- function(packageString, minimumVersion){
   }
 }
 
-checkPackageVersion("rsyncrosim", "1.5.0")
+checkPackageVersion("rsyncrosim", "2.0.0")
 checkPackageVersion("tidyverse",  "2.0.0")
 checkPackageVersion("terra",      "1.5.21")
 checkPackageVersion("dplyr",      "1.1.2")
@@ -119,19 +119,19 @@ if(nrow(WeatherZoneTable) == 0)
 
 # Handle unsupported inputs
 if(nrow(WindGrid) != 0) {
-  updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "warning")
+  updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "info")
 }
 
 if(nrow(GreenUp) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support Green Up. Green Up options ignored.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support Green Up. Green Up options ignored.", type = "info")
 }
 
 if(nrow(Curing) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support specifying Curing by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify curing by fuel type.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support specifying Curing by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify curing by fuel type.", type = "info")
 }
 
 if(nrow(FuelLoad) != 0) {
-  updateRunLog("Cell2Fire transformer currently does not support specifying Fuel Loading by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify fuel loading by fuel type.", type = "warning")
+  updateRunLog("Cell2Fire transformer currently does not support specifying Fuel Loading by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify fuel loading by fuel type.", type = "info")
 }
 
 ## Check raster inputs for consistency ----
@@ -638,7 +638,7 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
       # Mask and save as raster
       rast(fuelsRaster, vals = seasonalAccumulators[[season]]) %>%
         mask(fuelsRaster) %>%
-        writeRaster(str_c(seasonalAccumulatorOutputFolder, "/it", Iteration, "-sn", lookup(season, SeasonTable$Name, SeasonTable$SeasonID), ".tif"), 
+        writeRaster(str_c(seasonalAccumulatorOutputFolder, "/it", Iteration, "-sn", lookup(season, SeasonTable$Name, SeasonTable$SeasonId), ".tif"), 
                     overwrite = T,
                     NAflag = -9999,
                     wopt = list(filetype = "GTiff",
@@ -852,7 +852,7 @@ if(saveBurnMaps) {
           Timestep = 0,
           Season = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer()) %>%
           mutate(
-            Season = lookup(Season, SeasonTable$SeasonID, SeasonTable$Name)) %>%
+            Season = lookup(Season, SeasonTable$SeasonId, SeasonTable$Name)) %>%
           filter(Iteration %in% iterations)) %>%
       as.data.frame
   }

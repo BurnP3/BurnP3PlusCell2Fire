@@ -1,88 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="burnP3PlusCell2Fire" displayName="Cell2Fire fire growth model add-on package for BurnP3+" isAddOn="True" extendsPackage="burnP3Plus" version="1.1.1" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
-  <transformers>
-		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
-			<datafeeds>
-				<datafeed name="FuelCode" displayName="Cell2Fire Fuel Code List" dataScope="Project">
-					<datasheets>
-						<datasheet name="FuelCode" displayName="Cell2Fire Fuel Code List" valueMember="FuelCodeID" displayMember="FuelCode">
-							<columns>
-								<column name="FuelCodeID" dataType="Integer" isPrimary="True"/>
-								<column name="ProjectID" dataType="Integer" isCompositeIndex="True"/>
-								<column name="FuelCode" displayName="Fuel Code" dataType="String"/>
-							</columns>
-							<defaultRecords>
-								<record columns="FuelCode" values="NF"/>
-								<record columns="FuelCode" values="C1"/>
-								<record columns="FuelCode" values="C2"/>
-								<record columns="FuelCode" values="C3"/>
-								<record columns="FuelCode" values="C4"/>
-								<record columns="FuelCode" values="C5"/>
-								<record columns="FuelCode" values="C6"/>
-								<record columns="FuelCode" values="C7"/>
-								<record columns="FuelCode" values="D1"/>
-								<record columns="FuelCode" values="D2"/>
-								<record columns="FuelCode" values="M1"/>
-								<record columns="FuelCode" values="M2"/>
-								<record columns="FuelCode" values="M3"/>
-								<record columns="FuelCode" values="M4"/>
-								<record columns="FuelCode" values="O1a"/>
-								<record columns="FuelCode" values="O1b"/>
-								<record columns="FuelCode" values="S1"/>
-								<record columns="FuelCode" values="S2"/>
-								<record columns="FuelCode" values="S3"/>
-              				</defaultRecords>
-						</datasheet>
-					</datasheets>
-				</datafeed>
-				<datafeed name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk" dataScope="Project">
-					<datasheets>
-						<datasheet name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk">
-							<columns>
-								<column name="FuelCodeCrosswalkID" dataType="Integer" isPrimary="True"/>
-								<column name="ProjectID" dataType="Integer" isCompositeIndex="True"/>
-								<column name="FuelType" displayName="Fuel Type" dataType="Integer" validationType="Datasheet" formula1="burnP3Plus_FuelType" allowDbNull="False"/>
-								<column name="Code" displayName="Cell2Fire Fuel Code" dataType="Integer" validationType="Datasheet" formula1="FuelCode"/>
-								<column name="PercentConifer" displayName="Percent Conifer" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
-								<column name="PercentDeadFir" displayName="Percent Dead Fir" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
-								<column name="GrassFuelLoading" displayName="Grass Fuel Loading" dataType="Double" format="0.00" validationType="Decimal" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
-								<column name="GrassCuring" displayName="Grass Curing" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
-							</columns>
-							<validations>
-                				<validation validationType="Unique" columns="FuelType"/>
-              				</validations>
-						</datasheet>
-					</datasheets>
-				</datafeed>
-			</datafeeds>
-			<pipeline>
-				<datafeed name="burnP3Plus_RunControl" type="Input"/>
-				<datafeed name="burnP3Plus_FireResampleOption" type="Input"/>
-				<datafeed name="burnP3Plus_LandscapeRasters" type="Input"/>
-				<datafeed name="burnP3Plus_OutputOption" type="Input"/>
-				<datafeed name="burnP3Plus_OutputOptionSpatial" type="Input"/>
-				<datafeed name="burnP3Plus_DeterministicIgnitionCount" type="Input"/>
-				<datafeed name="burnP3Plus_DeterministicIgnitionLocation" type="Input"/>
-				<datafeed name="burnP3Plus_DeterministicBurnCondition" type="Input"/>
-				<datafeed name="burnP3Plus_WindGrid" type="Input"/>
-				<datafeed name="burnP3Plus_GreenUp" type="Input"/>
-				<datafeed name="burnP3Plus_Curing" type="Input"/>
-				<datafeed name="burnP3Plus_FuelLoad" type="Input"/>
-				<datafeed name="burnP3Plus_OutputFireStatistic" type="Output"/>
-				<datafeed name="burnP3Plus_OutputBurnMap" type="Output"/>
-				<datafeed name="burnP3Plus_OutputFirePerimeter" type="Output"/>
-				<datafeed name="burnP3Plus_OutputAllPerim" type="Output"/>
-			</pipeline>
-		</transformer>
-	</transformers>
-	<layouts>
-		<layout name ="coreforms_ProjectDatafeeds" appendTo="burnP3Plus_FuelDefinition">
-	  	<item name="FuelCodeCrosswalk" displayName="Cell2Fire Crosswalk"/>
-	  </layout>
-	</layouts>
-	<updateProvider 
-		schemaVersion="1" 
-		minPackageVersion="0.4.2" 
-		className="SyncroSim.Core.XMLUpdateProvider" 
-		classAssembly="SyncroSim.Core"/>
+<package name="burnP3PlusCell2Fire" displayName= "BurnP3+ Cell2Fire" description= "Cell2Fire fire growth model for BurnP3+" version="2.0.0" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
+
+	<builtFor package = "burnP3Plus" version = "2.0.0"/>
+
+	<!--Project Datasheets-->
+
+	<dataSheet name="FuelCode" displayName="Cell2Fire Fuel Code List" displayMember="FuelCode" dataScope="Project">
+		<column name="FuelCode" displayName="Fuel Code" dataType="String"/>
+		<record columns="FuelCode" values="NF"/>
+		<record columns="FuelCode" values="C1"/>
+		<record columns="FuelCode" values="C2"/>
+		<record columns="FuelCode" values="C3"/>
+		<record columns="FuelCode" values="C4"/>
+		<record columns="FuelCode" values="C5"/>
+		<record columns="FuelCode" values="C6"/>
+		<record columns="FuelCode" values="C7"/>
+		<record columns="FuelCode" values="D1"/>
+		<record columns="FuelCode" values="D2"/>
+		<record columns="FuelCode" values="M1"/>
+		<record columns="FuelCode" values="M2"/>
+		<record columns="FuelCode" values="M3"/>
+		<record columns="FuelCode" values="M4"/>
+		<record columns="FuelCode" values="O1a"/>
+		<record columns="FuelCode" values="O1b"/>
+		<record columns="FuelCode" values="S1"/>
+		<record columns="FuelCode" values="S2"/>
+		<record columns="FuelCode" values="S3"/>
+	</dataSheet>
+
+	<dataSheet name="FuelCodeCrosswalk" displayName="Fuel Code Crosswalk" dataScope="Project">
+		<column name="FuelType" displayName="Fuel Type" dataType="Integer" validationType="Datasheet" formula1="burnP3Plus_FuelType" allowDbNull="False"/>
+		<column name="Code" displayName="Cell2Fire Fuel Code" dataType="Integer" validationType="Datasheet" formula1="FuelCode"/>
+		<column name="PercentConifer" displayName="Percent Conifer" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
+		<column name="PercentDeadFir" displayName="Percent Dead Fir" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
+		<column name="GrassFuelLoading" displayName="Grass Fuel Loading" dataType="Double" format="0.00" validationType="Decimal" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
+		<column name="GrassCuring" displayName="Grass Curing" dataType="Integer" validationType="WholeNumber" validationCondition="Between" formula1="0" formula2="100" isOptional="True"/>
+		<validation validationType="Unique" columns="FuelType"/>
+	</dataSheet>
+
+	<!--Transformers-->
+
+	<!--Fire Growth Cell2Fire Transformer-->
+	<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" isStochasticTime = "True" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml" condaEnvVersion="1">
+		<dataSheet name="burnP3Plus_RunControl" type="Input"/>
+		<dataSheet name="burnP3Plus_FireResampleOption" type="Input"/>
+		<dataSheet name="burnP3Plus_LandscapeRasters" type="Input"/>
+		<dataSheet name="burnP3Plus_OutputOption" type="Input"/>
+		<dataSheet name="burnP3Plus_OutputOptionSpatial" type="Input"/>
+		<dataSheet name="burnP3Plus_DeterministicIgnitionCount" type="Input"/>
+		<dataSheet name="burnP3Plus_DeterministicIgnitionLocation" type="Input"/>
+		<dataSheet name="burnP3Plus_DeterministicBurnCondition" type="Input"/>
+		<dataSheet name="burnP3Plus_WindGrid" type="Input"/>
+		<dataSheet name="burnP3Plus_GreenUp" type="Input"/>
+		<dataSheet name="burnP3Plus_Curing" type="Input"/>
+		<dataSheet name="burnP3Plus_FuelLoad" type="Input"/>
+		<dataSheet name="burnP3Plus_OutputFireStatistic" type="Output"/>
+		<dataSheet name="burnP3Plus_OutputBurnMap" type="Output"/>
+		<dataSheet name="burnP3Plus_OutputFirePerimeter" type="Output"/>
+		<dataSheet name="burnP3Plus_OutputAllPerim" type="Output"/>
+	</transformer>
+
+	<!--Layouts-->
+
+	<!--Project Layout-->
+	<layout type="Project">
+		<item name="FuelCodeCrosswalk" displayName="Cell2Fire Crosswalk"/>
+	</layout>
+
 </package>
