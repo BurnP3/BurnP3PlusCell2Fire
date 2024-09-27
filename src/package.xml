@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="burnP3PlusCell2Fire" displayName="Cell2Fire fire growth model add-on package for BurnP3+" isAddOn="True" extendsPackage="burnP3Plus" version="1.1.1" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
+<package name="burnP3PlusCell2Fire" displayName="Cell2Fire fire growth model add-on package for BurnP3+" isAddOn="True" extendsPackage="burnP3Plus" version="1.1.2" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
   <transformers>
 		<transformer name="fireGrowthCell2Fire" isPrimary="True" displayName="3 - Grow Fires with Cell2Fire" isRunnable="True" programName="Rscript" runContext="AllowRemote" className="SyncroSim.StochasticTime.StochasticTimeTransformer" classAssembly="SyncroSim.StochasticTime" programArguments="growth-cell2fire.R" configurationSheet="burnP3Plus_RunControl" condaEnv="burnP3Plus.yml">
 			<datafeeds>
