@@ -8,6 +8,7 @@ library(rsyncrosim)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(terra))
+suppressPackageStartupMessages(library(sf))
 suppressPackageStartupMessages(library(data.table))
 
 checkPackageVersion <- function(packageString, minimumVersion){
@@ -339,17 +340,6 @@ resetFolder <- function(path) {
   list.files(path, full.names = T) %>%
     unlink(recursive = T, force = T)
   invisible()
-}
-
-# Function to convert from latlong to cell index
-cellFromLatLong <- function(x, lat, long) {
-  # Convert list of lat and long to SpatVector, reproject to source crs
-  points <- matrix(c(long, lat), ncol = 2) %>%
-    vect(crs = "EPSG:4326") %>%
-    project(x)
-  
-  # Get vector of cell ID's from points
-  return(cells(x, points)[, "cell"])
 }
 
 # Get burn area from output csv
@@ -703,7 +693,13 @@ fwrite(spatialData, spatialDataFile, na = "")
 
 # Convert ignition location to cell ID
 ignitionLocation <- DeterministicIgnitionLocation %>%
-  mutate(CellID = cellFromLatLong(fuelsRaster, Latitude, Longitude)) %>%
+  mutate(CellID = cellFromXY(fuelsRaster,
+                            xy = data.frame(long=Longitude,
+                                            lat=Latitude) %>%
+                              st_as_sf(crs = "EPSG:4326",
+                                      coords = c("long","lat")) %>%
+                              st_transform(crs = crs(fuelsRaster)) %>%
+                              st_coordinates)) %>%
   dplyr::select(Iteration, FireID, CellID, Season) %>%
   arrange(Iteration, FireID)
 
@@ -780,10 +776,14 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   
   # Determine Fire and Weather Zones if the rasters are present, as well as 
   # fuel type of ignition location
-  OutputFireStatistic$cell <- cellFromLatLong(
-    fuelsRaster, 
-    OutputFireStatistic$Latitude, 
-    OutputFireStatistic$Longitude)
+  OutputFireStatistic$cell <- cellFromXY(
+    fuelsRaster,
+    xy = data.frame(long=OutputFireStatistic$Longitude,
+                    lat=OutputFireStatistic$Latitude) %>%
+        st_as_sf(crs = "EPSG:4326",
+                coords = c("long","lat")) %>%
+        st_transform(crs = crs(fuelsRaster)) %>%
+        st_coordinates)
   
   if (!is.null(weatherZoneRaster)){
     OutputFireStatistic <- OutputFireStatistic %>%
