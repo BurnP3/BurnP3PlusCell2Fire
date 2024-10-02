@@ -53,7 +53,7 @@
 		<dataSheet name="burnP3Plus_WindGrid" type="Input"/>
 		<dataSheet name="burnP3Plus_GreenUp" type="Input"/>
 		<dataSheet name="burnP3Plus_Curing" type="Input"/>
-		<dataSheet name="burnP3Plus_FuelLoad" type="Input"/>
+		<!-- <dataSheet name="burnP3Plus_FuelLoad" type="Input"/> -->
 		<dataSheet name="burnP3Plus_OutputFireStatistic" type="Output"/>
 		<dataSheet name="burnP3Plus_OutputBurnMap" type="Output"/>
 		<dataSheet name="burnP3Plus_OutputFirePerimeter" type="Output"/>
