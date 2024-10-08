@@ -67,6 +67,17 @@ OutputOptionsSpatial <- datasheet(myScenario, "burnP3Plus_OutputOptionSpatial", 
 FireZoneTable <- datasheet(myScenario, "burnP3Plus_FireZone")
 WeatherZoneTable <- datasheet(myScenario, "burnP3Plus_WeatherZone")
 
+# Create function to test if datasheets are empty
+isDatasheetEmpty <- function(ds){
+  if (nrow(ds) == 0) {
+    return(TRUE)
+  }
+  if (all(is.na(ds))) {
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
 # Import relevant rasters, allowing for missing elevation
 fuelsRaster <- rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["FuelGridFileName"]])
 elevationRaster <- tryCatch(
@@ -74,13 +85,13 @@ elevationRaster <- tryCatch(
   error = function(e) NULL)
 
 ## Handle empty values ----
-if(nrow(FuelTypeCrosswalk) == 0) {
+if(isDatasheetEmpty(FuelTypeCrosswalk)) {
   updateRunLog("No fuels code crosswalk found! Using default crosswalk for Canadian Forest Service fuel codes.", type = "warning")
   FuelTypeCrosswalk <- fread(file.path(ssimEnvironment()$PackageDirectory, "Default Fuel Crosswalk.csv"))
   saveDatasheet(myScenario, as.data.frame(FuelTypeCrosswalk), "burnP3PlusCell2Fire_FuelCodeCrosswalk")
 }
 
-if(nrow(OutputOptions) == 0) {
+if(isDatasheetEmpty(OutputOptions)) {
   updateRunLog("No tabular output options chosen. Defaulting to keeping all tabular outputs.", type = "info")
   OutputOptions[1,] <- rep(TRUE, length(OutputOptions[1,]))
   saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
@@ -91,7 +102,7 @@ if(nrow(OutputOptions) == 0) {
   saveDatasheet(myScenario, OutputOptions, "burnP3Plus_OutputOption")
 }
 
-if(nrow(OutputOptionsSpatial) == 0) {
+if(isDatasheetEmpty(OutputOptionsSpatial)) {
   updateRunLog("No spatial output options chosen. Defaulting to keeping all spatial outputs.", type = "info")
   OutputOptionsSpatial[1,] <- rep(TRUE, length(OutputOptionsSpatial[1,]))
   saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
@@ -102,37 +113,37 @@ if(nrow(OutputOptionsSpatial) == 0) {
   saveDatasheet(myScenario, OutputOptionsSpatial, "burnP3Plus_OutputOptionSpatial")
 }
 
-if(nrow(BatchOption) == 0) {
+if(isDatasheetEmpty(BatchOption)) {
   updateRunLog("No batch size chosen. Defaulting to batches of 250 iterations.", type = "info")
   BatchOption[1,] <- c(250)
   saveDatasheet(myScenario, BatchOption, "burnP3Plus_BatchOption")
 }
 
-if(nrow(ResampleOption) == 0) {
+if(isDatasheetEmpty(ResampleOption)) {
   updateRunLog("No Minimum Fire Size chosen.\nDefaulting to a Minimum Fire Size of 1ha.\nPlease see the Fire Resampling Options table for more details.", type = "info")
   ResampleOption[1,] <- c(1,0)
   saveDatasheet(myScenario, ResampleOption, "burnP3Plus_FireResampleOption")
 }
 
-if(nrow(FireZoneTable) == 0)
+if(isDatasheetEmpty(FireZoneTable))
   FireZoneTable <- data.frame(Name = "", ID = 0)
-if(nrow(WeatherZoneTable) == 0)
+if(isDatasheetEmpty(WeatherZoneTable))
   WeatherZoneTable <- data.frame(Name = "", ID = 0)
 
 # Handle unsupported inputs
-if(nrow(WindGrid) != 0) {
+if(!isDatasheetEmpty(WindGrid)) {
   updateRunLog("Cell2Fire currently does not support Wind Grids. Wind Grid options ignored.", type = "info")
 }
 
-if(nrow(GreenUp) != 0) {
+if(!isDatasheetEmpty(GreenUp)) {
   updateRunLog("Cell2Fire transformer currently does not support Green Up. Green Up options ignored.", type = "info")
 }
 
-if(nrow(Curing) != 0) {
+if(!isDatasheetEmpty(Curing)) {
   updateRunLog("Cell2Fire transformer currently does not support specifying Curing by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify curing by fuel type.", type = "info")
 }
 
-if(nrow(FuelLoad) != 0) {
+if(!isDatasheetEmpty(FuelLoad)) {
   updateRunLog("Cell2Fire transformer currently does not support specifying Fuel Loading by season. Please use the Cell2Fire Fuel Code Crosswalk to statically specify fuel loading by fuel type.", type = "info")
 }
 
@@ -236,7 +247,7 @@ saveSeasonalBurnMaps <- any(OutputOptionsSpatial$SeasonalBurnMap,
 minimumFireSize <- ResampleOption$MinimumFireSize
 
 # Combine fuel type definitions with codes if provided
-if(nrow(FuelTypeCrosswalk) > 0) {
+if(!isDatasheetEmpty(FuelTypeCrosswalk)) {
   FuelType <- FuelType %>%
     left_join(FuelTypeCrosswalk, by = c("Name" = "FuelType"))
 } else
@@ -823,7 +834,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     as.data.frame()
   
   # Output if there are records to save
-  if(nrow(OutputFireStatistic) > 0)
+  if(!isDatasheetEmpty(OutputFireStatistic))
     saveDatasheet(myScenario, OutputFireStatistic, "burnP3Plus_OutputFireStatistic", append = T)
   
   updateRunLog("Finished collecting fire statistics in ", updateBreakpoint())
@@ -859,7 +870,7 @@ if(saveBurnMaps) {
   }
   
   # Output if there are records to save
-  if(nrow(OutputBurnMap) > 0)
+  if(!isDatasheetEmpty(OutputBurnMap))
     saveDatasheet(myScenario, OutputBurnMap, "burnP3Plus_OutputBurnMap", append = T)
   
   updateRunLog("Finished accumulating burn maps in ", updateBreakpoint())
@@ -880,7 +891,7 @@ if(OutputOptionsSpatial$AllPerim | (saveBurnMaps & minimumFireSize > 0)){
     as.data.frame
   
   # Output if there are records to save
-  if(nrow(OutputAllPerim) > 0)
+  if(!isDatasheetEmpty(OutputAllPerim))
     saveDatasheet(myScenario, OutputAllPerim, "burnP3Plus_OutputAllPerim", append = T)
   
   updateRunLog("Finished individual burn maps in ", updateBreakpoint())
