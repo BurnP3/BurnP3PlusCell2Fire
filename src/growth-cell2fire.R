@@ -198,7 +198,7 @@ getRunContext <- function() {
   isParallel <- libraryPath %>%
     str_split("/|(\\\\)") %>%
     pluck(1) %>%
-    str_detect("Parallel") %>%
+    str_detect("MultiProc") %>%
     any %>%
     `&`(str_detect(libraryName, "Job-\\d"))
   
