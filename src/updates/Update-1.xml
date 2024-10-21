@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<update>
-  <action code="Exec" condition="TableNotExists" criteria="burnP3Plus_GreenUp">
-    <item>CREATE TABLE burnP3PlusCell2Fire_BatchOption(BatchOptionID INTEGER PRIMARY KEY, BatchSize INTEGER)</item>
-    <item>INSERT INTO burnP3PlusCell2Fire_BatchOption (BatchSize) VALUES (250)</item>
-  </action>
-</update>
