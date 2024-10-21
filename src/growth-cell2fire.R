@@ -14,15 +14,15 @@ suppressPackageStartupMessages(library(data.table))
 checkPackageVersion <- function(packageString, minimumVersion){
   result <- compareVersion(as.character(packageVersion(packageString)), minimumVersion)
   if (result < 0) {
-    updateRunLog("The R package ", packageString, " (", 
-                 as.character(packageVersion(packageString)), 
-                 ") does not meet the minimum requirements (", minimumVersion, 
-                 ") for this version of BurnP3+ Cell2Fire. Please upgrade this package if the scenario fails to run.", 
+    updateRunLog("The R package ", packageString, " (",
+                 as.character(packageVersion(packageString)),
+                 ") does not meet the minimum requirements (", minimumVersion,
+                 ") for this version of BurnP3+ Cell2Fire. Please upgrade this package if the scenario fails to run.",
                  type = "warning")
   } else if (result > 0) {
-    updateRunLog("Using a newer version of ", packageString, " (", 
-                 as.character(packageVersion(packageString)), 
-                 ") than BurnP3+ Cell2Fire was built against (", 
+    updateRunLog("Using a newer version of ", packageString, " (",
+                 as.character(packageVersion(packageString)),
+                 ") than BurnP3+ Cell2Fire was built against (",
                  minimumVersion, ").", type = "info")
   }
 }
@@ -165,13 +165,13 @@ checkSpatialInput <- function(x, name, checkProjection = T, warnOnly = F) {
         invisible(NULL)
       } else
         stop("Number of rows and columns in ", name, " map do not match Fuels map. Please check that the extent and resolution of these maps match.")
-    
+
     # Info if CRS is not matching
     if(checkProjection)
       if(crs(x) != crs(fuelsRaster))
         updateRunLog("Projection of ", name, " map does not match Fuels map. Please check that the CRS of these maps match.", type = "info")
   }
-  
+
   # Silently return for clean pipelining
   invisible(x)
 }
@@ -193,7 +193,7 @@ extraIgnitionIDs <- DeterministicIgnitionLocation %>%
 getRunContext <- function() {
   libraryPath <- ssimEnvironment()$LibraryFilePath %>% normalizePath()
   libraryName <- libraryPath %>% basename %>% {tools::file_path_sans_ext(.)}
-  
+
   # Libraries are identified as remote if the path includes the Parallel folder and library follows the Job-<jobid> naming convention
   isParallel <- libraryPath %>%
     str_split("/|(\\\\)") %>%
@@ -201,18 +201,18 @@ getRunContext <- function() {
     str_detect("MultiProc") %>%
     any %>%
     `&`(str_detect(libraryName, "Job-\\d"))
-  
+
   # Return if false
   if (!isParallel)
     return(list(isParallel = F, numJobs = 1, jobIndex = 1))
-  
+
   # Otherwise parse number of jobs and current job index
   numJobs <- libraryPath %>%
     dirname() %>%
     list.files("Job-\\d+.ssim.temp") %>%
     length()
   jobIndex <- str_extract(libraryName, "\\d+") %>% as.integer()
-  
+
   return(list(isParallel = T, numJobs = numJobs, jobIndex = jobIndex))
 }
 
@@ -263,7 +263,7 @@ if(!isDatasheetEmpty(FuelTypeCrosswalk)) {
 
 # Ensure all fuel types are assigned to a fuel code
 if(any(is.na(FuelType$Code)))
-  stop("Could not find a valid Cell2Fire Fuel Code for one or more Fuel Types. Please add Cell2Fire Fuel Code Crosswalk records for the following Fuel Types in the project scope: ", 
+  stop("Could not find a valid Cell2Fire Fuel Code for one or more Fuel Types. Please add Cell2Fire Fuel Code Crosswalk records for the following Fuel Types in the project scope: ",
        FuelType %>% filter(is.na(Code)) %>% pull(Name) %>% str_c(collapse = "; "))
 
 # Ensure all fuel codes are valid
@@ -274,7 +274,7 @@ if(any(!FuelType$Code %in% ValidFuelCodes))
 # Ensure that there are no fuels present in the grid that are not tied to a valid code
 fuelIdsPresent <- fuelsRaster %>% unique() %>% pull
 if(any(!fuelIdsPresent %in% c(FuelType$ID, NaN)))
-  stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ", 
+  stop("Found one or more values in the Fuels Map that are not assigned to a known Fuel Type. Please add definitions for the following Fuel IDs: ",
        dplyr::setdiff(fuelIdsPresent,  FuelType[,"ID"]) %>% str_c(collapse = " "))
 
 ## Setup files and folders ----
@@ -331,10 +331,10 @@ updateBreakpoint <- function() {
   # Calculate time since last breakpoint
   newBreakPoint <- proc.time()
   elapsed <- (newBreakPoint - currentBreakPoint)['elapsed']
-  
+
   # Update current breakpoint
   currentBreakPoint <<- newBreakPoint
-  
+
   # Return cleaned elapsed time
   if (elapsed < 60) {
     return(str_c(round(elapsed), " seconds"))
@@ -367,12 +367,12 @@ getBurnAreas <- function(rawOutputGridPaths) {
   # Calculate burn areas for each fire
   burnAreas <- c(NA_real_)
   length(burnAreas) <- length(rawOutputGridPaths)
-  
+
   burnAreas <- unlist(lapply(rawOutputGridPaths[seq_along(burnAreas)],getBurnArea))
-  
+
   # Convert pixels to hectares (resolution is assumed to be in meters)
   burnAreas <- burnAreas * (xres(fuelsRaster) * yres(fuelsRaster) / 1e4)
-  
+
   return(burnAreas)
 }
 
@@ -395,7 +395,7 @@ processOutputs <- function(batchOutput, rawOutputGridPaths) {
   batchOutput <- batchOutput %>%
     filter(ResampleStatus == "Kept" | ResampleStatus == "Extra") %>%
     bind_rows(tibble(Iteration = unique(batchOutput$Iteration)))
-  
+
   # Summarize the FireIDs to export by Iteration
   ignitionsToExportTable <- batchOutput %>%
     dplyr::select(Iteration, UniqueFireID, FireID, Season) %>%
@@ -403,7 +403,7 @@ processOutputs <- function(batchOutput, rawOutputGridPaths) {
     summarize(UniqueFireIDs = list(UniqueFireID),
               FireIDs = list(FireID),
               Seasons = list(Season))
-  
+
   # Generate burn count maps
   for (i in seq_len(nrow(ignitionsToExportTable)))
     generateBurnAccumulators(Iteration = ignitionsToExportTable$Iteration[i], UniqueFireIDs = ignitionsToExportTable$UniqueFireIDs[[i]], burnGrids = rawOutputGridPaths, FireIDs = ignitionsToExportTable$FireIDs[[i]], Seasons = ignitionsToExportTable$Seasons[[i]])
@@ -412,20 +412,20 @@ processOutputs <- function(batchOutput, rawOutputGridPaths) {
 # Function to call Cell2Fire on the (global) parameter file
 runCell2Fire <- function(numIgnitions) {
   resetFolder(gridOutputFolder)
-  
+
   # Format folder paths if on windows
   if(.Platform$OS.type == "unix") {
     inputInstanceFolder <- tempDir %>%
       str_c("/")
     outputFolder <- gridOutputFolder %>%
-      str_c("/")  
+      str_c("/")
   } else {
     inputInstanceFolder <- tempDir %>%
       str_c("\\\\")
     outputFolder <- gridOutputFolder %>%
-      str_c("\\\\")  
+      str_c("\\\\")
   }
-  
+
   system2(cell2fireExecutable,
           c("--input-instance-folder", inputInstanceFolder,
             "--output-folder", outputFolder,
@@ -441,20 +441,20 @@ runBatch <- function(batchInputs) {
   batchInputs <- unnest(batchInputs, data)
   generateIgnitionFile(batchInputs$CellID)
   numIgnitions <- nrow(batchInputs)
-  
+
   # - Unnest and process weather info
   batchWeather <- unnest(batchInputs, data)
   generateWeatherFiles(batchWeather)
-  
+
   # Run Cell2Fire on the batch
   runCell2Fire(numIgnitions)
-  
+
   # Get relative paths to all raw outputs
   rawOutputGridPaths <- file.path(gridOutputFolder, "Grids", seq(numIgnitions), "ForestGrid00.csv")
-  
+
   # Get burn areas
   burnAreas <- getBurnAreas(rawOutputGridPaths)
-  
+
   # Convert and save spatial outputs as needed
   batchOutput <- batchInputs %>%
     select(Iteration, FireID, Season) %>%
@@ -462,18 +462,18 @@ runBatch <- function(batchInputs) {
       UniqueFireID = row_number(),
       Area = burnAreas) %>%
     getResampleStatus()
-  
+
   # Save GeoTiffs if needed
   if(saveBurnMaps)
     processOutputs(batchOutput, rawOutputGridPaths)
-  
+
   # Clear up temp files
   resetFolder(gridOutputFolder)
-  
+
   # Update Progress Bar
   progressBar("step")
   progressBar(type = "message", message = "Growing fires...")
-  
+
   # Return relevant outputs
   batchOutput %>%
     select(-UniqueFireID, -Season) %>%
@@ -538,7 +538,7 @@ generateWeatherFile <- function(weatherData, uniqueFireIndex) {
 generateWeatherFiles <- function(DeterministicBurnCondition){
   # Clear out old weather files if present
   resetFolder(weatherFolder)
-  
+
   # Generate files as needed
   DeterministicBurnCondition %>%
     group_by(Iteration, FireID) %>%
@@ -564,10 +564,10 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
     for(i in seq_along(UniqueFireIDs)){
       if(!is.na(UniqueFireIDs[i])){
         burnArea <- as.matrix(fread(burnGrids[UniqueFireIDs[i]],header = F))
-        
-        rast(fuelsRaster, vals = burnArea) %>% 
+
+        rast(fuelsRaster, vals = burnArea) %>%
           mask(fuelsRaster) %>%
-          writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"), 
+          writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"),
                       overwrite = T,
                       NAflag = -9999,
                       wopt = list(filetype = "GTiff",
@@ -577,38 +577,38 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
     }
     return()
   }
-  
+
   # initialize empty matrix
   accumulator <- matrix(0, nrow(fuelsRaster), ncol(fuelsRaster))
-  
+
   # initialize a list of empty matrices for each season
   seasonValues <- SeasonTable %>%
     filter(Name != "All") %>%
     pull(Name) %>%
     unique
-  seasonalAccumulators <- accumulator %>% 
+  seasonalAccumulators <- accumulator %>%
     list() %>%
     rep(length(seasonValues)) %>%
     set_names(seasonValues)
-  
+
   # Combine burn grids
   for(i in seq_along(UniqueFireIDs)){
     if(!is.na(UniqueFireIDs[i])){
       # Read in and add current burn map
       burnArea <- as.matrix(fread(burnGrids[UniqueFireIDs[i]],header = F))
       accumulator <- accumulator + burnArea
-      
+
       # Add to seasonal accumulator
       if(saveSeasonalBurnMaps) {
         thisSeason <- Seasons[i]
         if (thisSeason %in% seasonValues)
           seasonalAccumulators[[thisSeason]] <- seasonalAccumulators[[thisSeason]] + burnArea
       }
-      
+
       if(OutputOptionsSpatial$AllPerim == T){
-        rast(fuelsRaster, vals = burnArea) %>% 
+        rast(fuelsRaster, vals = burnArea) %>%
           mask(fuelsRaster) %>%
-          writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"), 
+          writeRaster(str_c(allPerimOutputFolder, "/it", Iteration,"_fire_", FireIDs[i], ".tif"),
                       overwrite = T,
                       NAflag = -9999,
                       wopt = list(filetype = "GTiff",
@@ -617,26 +617,26 @@ generateBurnAccumulators <- function(Iteration, UniqueFireIDs, burnGrids, FireID
       }
     }
   }
-  
+
   # Binarize accumulator to burn or not
   accumulator[accumulator != 0] <- 1
-  
+
   # Mask and save as raster
   rast(fuelsRaster, vals = accumulator) %>%
     mask(fuelsRaster) %>%
-    writeRaster(str_c(accumulatorOutputFolder, "/it", Iteration, ".tif"), 
+    writeRaster(str_c(accumulatorOutputFolder, "/it", Iteration, ".tif"),
                 overwrite = T,
                 NAflag = -9999,
                 wopt = list(filetype = "GTiff",
                             datatype = "INT4S",
                             gdal = c("COMPRESS=DEFLATE","ZLEVEL=9","PREDICTOR=2")))
-  
+
   # Repeat for each seasonal accumulator
   if(saveSeasonalBurnMaps) {
     for (season in seasonValues) {
       # Binarize accumulator to burn or not
       seasonalAccumulators[[season]][seasonalAccumulators[[season]] != 0] <- 1
-      
+
       # Mask and save as raster
       rast(fuelsRaster, vals = seasonalAccumulators[[season]]) %>%
         mask(fuelsRaster) %>%
@@ -670,7 +670,7 @@ write_file(mapMetadata, mapMetadataFile)
 # Spatial data
 # - cell2fire expects all spatial data unrolled into columns of a csv with
 #   a fixed set and order of columns
-spatialData <- 
+spatialData <-
   tibble(
     fueltype = values(fuelsRaster, mat = F),
     mon = NA,
@@ -706,14 +706,16 @@ fwrite(spatialData, spatialDataFile, na = "")
 # Convert ignition location to cell ID
 ignitionLocation <- DeterministicIgnitionLocation %>%
   mutate(CellID = cellFromXY(fuelsRaster,
-                            xy = data.frame(long=Longitude,
+                             xy = data.frame(long=Longitude,
                                             lat=Latitude) %>%
-                              st_as_sf(crs = "EPSG:4326",
+                             st_as_sf(crs = "EPSG:4326",
                                       coords = c("long","lat")) %>%
-                              st_transform(crs = crs(fuelsRaster)) %>%
-                              st_coordinates)) %>%
+                             st_transform(crs = crs(fuelsRaster)) %>%
+                             st_coordinates)) %>%
   dplyr::select(Iteration, FireID, CellID, Season) %>%
   arrange(Iteration, FireID)
+
+
 
 # Generate empty weather template file
 generateWeatherTemplateFile()
@@ -722,18 +724,18 @@ generateWeatherTemplateFile()
 fireGrowthInputs <- DeterministicBurnCondition %>%
   # Group by iteration and fire ID for the `growFire()` function
   nest(.by = c(Iteration, FireID)) %>%
-  
+
   # Add ignition location information
   left_join(ignitionLocation, c("Iteration", "FireID")) %>%
-  
+
   # Split extra ignitions into reasonable batch sizes
-  mutate(extraIgnitionsBatch = (row_number() - 1) %/% batchSize + 1, 
+  mutate(extraIgnitionsBatch = (row_number() - 1) %/% batchSize + 1,
          extraIgnitionsBatch = ifelse(Iteration == 0, extraIgnitionsBatch, 0)) %>%
-  
+
   # Group by just iteration for the `runIteration()` function
-  nest(.by = c(Iteration, extraIgnitionsBatch)) %>% 
+  nest(.by = c(Iteration, extraIgnitionsBatch)) %>%
   dplyr::select(-extraIgnitionsBatch) %>%
-  
+
   # Finally split into batches of the appropriate size
   group_by(batchID = (cumsum(map_int(data, nrow)) - 1) %/% batchSize) %>%
   group_split(.keep = F)
@@ -755,7 +757,7 @@ updateRunLog("Finished burning fires in ", updateBreakpoint())
 # Generate the table if it is a requested output, or resampling is requested
 if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   progressBar(type = "message", message = "Generating fire statistics table...")
-  
+
   # Load necessary rasters and lookup tables
   fireZoneRaster <- tryCatch(
     rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["FireZoneGridFileName"]]),
@@ -765,18 +767,18 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
     rast(datasheet(myScenario, "burnP3Plus_LandscapeRasters")[["WeatherZoneGridFileName"]]),
     error = function(e) NULL) %>%
     checkSpatialInput("Weather Zone", warnOnly = T)
-  
+
   # Add extra information to Fire Statistic table
   OutputFireStatistic <- OutputFireStatistic %>%
-    
+
     # Start by joining summarized burn conditions
     left_join({
       # Start by summarizing burn conditions
       DeterministicBurnCondition %>%
-        
+
         # Only consider iterations this job is responsible for
         filter(Iteration %in% iterations | (Iteration == 0 & FireID %in% extraIgnitionIDs)) %>%
-        
+
         # Summarize burn conditions by fire
         group_by(Iteration, FireID) %>%
         summarize(
@@ -784,9 +786,9 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
           HoursBurning = sum(HoursBurning)) %>%
         ungroup()},
       by = c("Iteration", "FireID")) %>%
-    left_join(DeterministicIgnitionLocation, by = c("Iteration", "FireID")) 
-  
-  # Determine Fire and Weather Zones if the rasters are present, as well as 
+    left_join(DeterministicIgnitionLocation, by = c("Iteration", "FireID"))
+
+  # Determine Fire and Weather Zones if the rasters are present, as well as
   # fuel type of ignition location
   OutputFireStatistic$cell <- cellFromXY(
     fuelsRaster,
@@ -807,7 +809,7 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   } else{
     OutputFireStatistic$WeatherZone <- WeatherZoneTable$Name
   }
-  
+
   if (!is.null(fireZoneRaster)){
     OutputFireStatistic <- OutputFireStatistic %>%
       mutate(
@@ -818,34 +820,34 @@ if(OutputOptions$FireStatistics | minimumFireSize > 0) {
   } else{
     OutputFireStatistic$FireZone <- FireZoneTable$Name
   }
-  
+
   OutputFireStatistic <- OutputFireStatistic %>%
     mutate(
       fueltypeID = fuelsRaster[][cell],
       FuelType = lookup(fueltypeID, FuelType$ID, FuelType$Name),
       Timestep = 0) %>%
-    
+
     # Incorporate Lat and Long and add TimeStep manually
-    
+
     # Clean up for saving
-    dplyr::select(Iteration, Timestep, FireID, Latitude, Longitude, Season, 
-                  Cause, FireZone, WeatherZone, FuelType, FireDuration, 
+    dplyr::select(Iteration, Timestep, FireID, Latitude, Longitude, Season,
+                  Cause, FireZone, WeatherZone, FuelType, FireDuration,
                   HoursBurning, Area, ResampleStatus) %>%
     as.data.frame()
-  
+
   # Output if there are records to save
   if(!isDatasheetEmpty(OutputFireStatistic))
     saveDatasheet(myScenario, OutputFireStatistic, "burnP3Plus_OutputFireStatistic", append = T)
-  
+
   updateRunLog("Finished collecting fire statistics in ", updateBreakpoint())
 }
 
 ## Burn maps ----
 if(saveBurnMaps) {
   progressBar(type = "message", message = "Saving burn maps...")
-  
+
   # Build table of burn maps and save to SyncroSim
-  OutputBurnMap <- 
+  OutputBurnMap <-
     tibble(
       FileName = list.files(accumulatorOutputFolder, full.names = T) %>% normalizePath(),
       Iteration = str_extract(FileName, "\\d+.tif") %>% str_sub(end = -5) %>% as.integer(),
@@ -853,7 +855,7 @@ if(saveBurnMaps) {
       Season = "All") %>%
     filter(Iteration %in% iterations) %>%
     as.data.frame
-  
+
   if(saveSeasonalBurnMaps) {
     # If seasonal burn maps have been saved, append them to the table
     OutputBurnMap <- OutputBurnMap %>%
@@ -868,20 +870,20 @@ if(saveBurnMaps) {
           filter(Iteration %in% iterations)) %>%
       as.data.frame
   }
-  
+
   # Output if there are records to save
   if(!isDatasheetEmpty(OutputBurnMap))
     saveDatasheet(myScenario, OutputBurnMap, "burnP3Plus_OutputBurnMap", append = T)
-  
+
   updateRunLog("Finished accumulating burn maps in ", updateBreakpoint())
 }
 
 ## All Perims
 if(OutputOptionsSpatial$AllPerim | (saveBurnMaps & minimumFireSize > 0)){
   progressBar(type = "message", message = "Saving individual burn maps...")
-  
+
   # Build table of burn maps and save to SyncroSim
-  OutputAllPerim <- 
+  OutputAllPerim <-
     tibble(
       FileName = list.files(allPerimOutputFolder, full.names = T) %>% normalizePath(),
       Iteration = str_extract(FileName, "\\d+_fire") %>% str_sub(end = -6) %>% as.integer(),
@@ -889,11 +891,11 @@ if(OutputOptionsSpatial$AllPerim | (saveBurnMaps & minimumFireSize > 0)){
       Timestep = FireID) %>%
     filter(Iteration %in% iterations | (Iteration == 0 & FireID %in% extraIgnitionIDs)) %>%
     as.data.frame
-  
+
   # Output if there are records to save
   if(!isDatasheetEmpty(OutputAllPerim))
     saveDatasheet(myScenario, OutputAllPerim, "burnP3Plus_OutputAllPerim", append = T)
-  
+
   updateRunLog("Finished individual burn maps in ", updateBreakpoint())
 }
 
