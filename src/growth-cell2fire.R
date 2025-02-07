@@ -120,8 +120,8 @@ if(isDatasheetEmpty(BatchOption)) {
 }
 
 if(isDatasheetEmpty(ResampleOption)) {
-  updateRunLog("No Minimum Fire Size chosen.\nDefaulting to a Minimum Fire Size of 1ha.\nPlease see the Fire Resampling Options table for more details.", type = "info")
-  ResampleOption[1,] <- c(1,0)
+  updateRunLog("No Minimum Fire Size chosen.\nDefaulting to a Minimum Fire Size of 0ha and with no extra fires. \nPlease see the Fire Resampling Options table for more details.", type = "info")
+  ResampleOption[1,] <- c(0,0)
   saveDatasheet(myScenario, ResampleOption, "burnP3Plus_FireResampleOption")
 }
 
