@@ -407,22 +407,25 @@ getResampleStatus <- function(burnSummary) {
 
 # Function to consolidate raw tabular outputs per batch 
 consolidateTabularOutputs <- function() {
-  # Read in raw individual burn perimeter data from current batch and save to parquet
-  fread(str_c(allPerimTablePath, ".csv")) %>%
-    arrow::write_parquet(sink = tempTablePath)
+  # Check that there is data to consolidate
+  if(nrow(fread(str_c(allPerimTablePath, ".csv"), nrows = 3)) > 0) {
+    # Read in raw individual burn perimeter data from current batch and save to parquet
+    fread(str_c(allPerimTablePath, ".csv")) %>%
+      arrow::write_parquet(sink = tempTablePath)
 
-  # Combine with previous tabular data, if present
-  c(allPerimTablePath, tempTablePath) %>%
-    `[`(file.exists(.)) %>% # This drops the all perim parquet file if it does not exist yet
-    arrow::open_dataset() %>%
-    arrow::write_parquet(sink = allPerimTablePath)
+    # Combine with previous tabular data, if present
+    c(allPerimTablePath, tempTablePath) %>%
+      `[`(file.exists(.)) %>% # This drops the all perim parquet file if it does not exist yet
+      arrow::open_dataset() %>%
+      arrow::write_parquet(sink = allPerimTablePath)
 
-  # Reset CSV File
-  writeLines(
-    "Iteration,FireID,CellID",
-    str_c(allPerimTablePath, ".csv"))
+    # Reset CSV File
+    writeLines(
+      "Iteration,FireID,CellID",
+      str_c(allPerimTablePath, ".csv"))
+  }
 
-  unlink(tempTablePath)
+  unlink(tempTablePath, force = T)
 }
 
 # Function to convert, accumulate, and clean up raw outputs
@@ -975,7 +978,8 @@ if(OutputOptionsSpatial$AllPerim | (saveBurnMaps & minimumFireSize > 0)){
         "Tabular burn outputs per fire", 
         ifelse(runContext$isParallel, str_c(" - Job ", runContext$jobIndex), "")))
   
-  saveDatasheet(myScenario, OutputAllPerimTabular, str_c("burnP3Plus_OutputAllPerimTabular"))
+  if(file.exists(allPerimTablePath))
+    saveDatasheet(myScenario, OutputAllPerimTabular, str_c("burnP3Plus_OutputAllPerimTabular"))
 
   # # TODO Tabular Per-Fire Outputs: Temporarily commenting out spatial per-fire outputs
   # # - Consider adding logic for deciding when to keep spatial outputs as well
