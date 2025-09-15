@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="burnP3PlusCell2Fire" displayName= "BurnP3+ Cell2Fire" description= "Cell2Fire fire growth model for BurnP3+" version="2.4.1" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
+<package name="burnP3PlusCell2Fire" displayName= "BurnP3+ Cell2Fire" description= "Cell2Fire fire growth model for BurnP3+" version="2.4.2" url="https://github.com/BurnP3/BurnP3PlusCell2Fire">
 
-	<builtFor package = "burnP3Plus" version = "2.5.2"/>
+	<builtFor package = "burnP3Plus" version = "2.5.3"/>
 
 	<!--Project Datasheets-->
 
