@@ -339,7 +339,9 @@ allPerimTablePath <-
   str_c(".parquet") %>%
   file.path(allPerimOutputFolder, .)
 
-tempTablePath <- "temp.parquet"
+tempTablePath <- "temp.parquet" %>%
+  file.path(tempDir, .)
+
 
 ### Convenience and conversion functions ----
 
