@@ -766,7 +766,7 @@ spatialData <-
     jd_min = NA,
     lat = NA,
     lon = NA,
-    elev = if(!is.null(elevationRaster)){ values(elevationRaster, mat = F)} else NA,
+    elev = if(!is.null(elevationRaster)){ values(elevationRaster, mat = F)} else -9999,
     ffmc = NA,
     ws = NA,
     waz = NA,
@@ -778,15 +778,14 @@ spatialData <-
     gfl = NA_real_,
     cur = NA_integer_,
     time = NA,
-    pattern = NA) %>%
+    pattern = NA) %>% 
   mutate(
     pc = lookup(fueltype, FuelType$ID, FuelType$PercentConifer),
     pdf = lookup(fueltype, FuelType$ID, FuelType$PercentDeadFir),
     gfl = lookup(fueltype, FuelType$ID, FuelType$GrassFuelLoading),
     cur = lookup(fueltype, FuelType$ID, FuelType$GrassCuring),
     fueltype = lookup(fueltype, FuelType$ID, FuelType$Code),
-    fueltype = replace_na(fueltype, "NF"),
-    elev = replace_na(elev, -9999)
+    fueltype = replace_na(fueltype, "NF")
   )
 fwrite(spatialData, spatialDataFile, na = "")
 
